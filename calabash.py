@@ -1,6 +1,8 @@
 import numpy as np
 import time
+import random
 from numpy import unravel_index
+
 def power_by_mtt(state, edges):
     """Calculate the total power of the state, by the matrix-tree theorem.
     """
@@ -24,7 +26,7 @@ def power_by_mtt(state, edges):
 
 
 def randomized_algorithm():
-    import random
+
     random.seed(0)
 
     n, edges = read_input()
@@ -38,9 +40,10 @@ def randomized_algorithm():
             best_power = power
     assert best_state is not None
     print ' '.join('%+d' % i for i in best_state)
-    print power
+    print 'random algorithm best power:',best_power
+    return best_power
 
-def greedy_algorithm():
+def construct_graph():
     import random
     random.seed(0)
 
@@ -48,99 +51,103 @@ def greedy_algorithm():
     times = 1
     best_state, best_power = None, None
 
-    startt=time.time()
-    #for each starting store max weight
-    pos_topos,pos_toneg,neg_topos,neg_toneg=4*[-1*np.ones((n+1,n+1),dtype=float)]
+    startt = time.time()
+    # for each starting store max weight
+    pos_topos, pos_toneg, neg_topos, neg_toneg = -1 * np.ones((n + 1, n + 1), dtype=float),-1 * np.ones((n + 1, n + 1), dtype=float),-1 * np.ones((n + 1, n + 1), dtype=float),-1 * np.ones((n + 1, n + 1), dtype=float)
 
     for edge in edges:
-        u,v,w=edge
-        indu=abs(u)
-        indv=abs(v)
-        assert (type(u)==int and type(v)==int and type(w)==float)
-        if u>0 and v>0:
+        u, v, w = edge
+        indu = abs(u)
+        indv = abs(v)
+        assert (type(u) == int and type(v) == int and type(w) == float)
+        if u > 0 and v > 0:
             u, v = abs(u), abs(v)
-            pos_topos[u,v]=w
-        if u>0 and v<0:
+            pos_topos[u, v] = w
+        if u > 0 and v < 0:
             u, v = abs(u), abs(v)
-            pos_toneg[u,v]=w
-        if u<0 and v>0:
+            pos_toneg[u, v] = w
+        if u < 0 and v > 0:
             u, v = abs(u), abs(v)
-            neg_topos[u,v]=w
-        if u<0 and v<0:
-            print('neg to nge:',u,v)
+            neg_topos[u, v] = w
+        if u < 0 and v < 0:
             u, v = abs(u), abs(v)
-            neg_toneg[u,v]=w
-        if u==0:
-            if v>0:
-                print('before 0:',neg_toneg[indu,indv])
-                print('v>0:',u,v,w)
-                neg_topos[u,v]=w
-                pos_topos[u,v]=w
-                print('after 0:',neg_toneg[indu,indv])
-            if v<0:
-                print('v<0:',u,v,w)
-                neg_toneg[u,abs(v)]=w
-                pos_toneg[u,abs(v)]=w
-    endt=time.time()
-    assert (neg_topos[0,:].all()==pos_topos[0,:].all())
-    assert (pos_toneg[0,:].all()==neg_toneg[0,:].all())
-    print('index finished in {}'.format((endt-startt)))
+            neg_toneg[u, v] = w
+        if u == 0:
+            if v > 0:
+                # print('before 0:', neg_toneg[indu, indv])
+                # print('v>0:', u, v, w)
+                neg_topos[u, v] = w
+                pos_topos[u, v] = w
+            if v < 0:
+                # print('v<0:', u, v, w)
+                neg_toneg[u, abs(v)] = w
+                pos_toneg[u, abs(v)] = w
+    endt = time.time()
+    assert (neg_topos[0, :].all() == pos_topos[0, :].all())
+    assert (pos_toneg[0, :].all() == neg_toneg[0, :].all())
+    print('index finished in {}'.format((endt - startt)))
 
-    print ('neg to neg\n',neg_toneg)
-    print('neg to pos:\n', neg_topos)
-    print('pos to neg:/n', pos_toneg)
-    print('pos to pos:' + '/n', pos_topos)
+    # print ('neg to neg\n', neg_toneg)
+    # print('neg to pos:\n', neg_topos)
+    # print('pos to neg:/n', pos_toneg)
+    # print('pos to pos:' + '/n', pos_topos)
 
-    mystate=[]
+    state = np.arange(1,n+1)
 
-    matrix=np.concatenate([np.expand_dims(neg_toneg,0),np.expand_dims(neg_topos,0),np.expand_dims(pos_toneg,0),np.expand_dims(pos_topos,0)],0)
+    matrix = np.concatenate([np.expand_dims(neg_toneg, 0), np.expand_dims(neg_topos, 0), np.expand_dims(pos_toneg, 0),
+                             np.expand_dims(pos_topos, 0)], 0)
     print(matrix[0].shape)
     print(matrix[1].shape)
     print(matrix[3])
 
+    # print('preliminary negtoneg,negtopost,postoneg,postopos matrix:', matrix)
+    return n,edges,state,matrix
+
+def greedy_algorithm():
+    startt=time.time()
+
+    n,edges,graph_state,matrix=construct_graph()
+    mystate=[]
     nodeid_prev=0
-
-    print('preliminary matrix:',matrix)
     for i in range(1,n+1):
-        nodeid=-99
-
+        # print('iter',i,'------------------------')
         fromneg=[0,1]
         frompos=[2,3]
-        fromsign=[]
         if nodeid_prev<0:
             fromsign=fromneg
         else:
             fromsign=frompos
 
-        vec = matrix[fromsign, nodeid_prev, :]
-        print('vec shape:',vec.shape)
-        print('vec:',vec)
-
-        maxw=np.max(vec)
-        indice=unravel_index(vec.argmax(), vec.shape)
-        sign, nodeindex = indice
+        candidate_graph = matrix[fromsign, nodeid_prev, :]
+        assert (candidate_graph.shape==(2,n+1))
+        # print('candidate_graph',candidate_graph)
+        maxw=np.max(candidate_graph)
+        indice=unravel_index(candidate_graph.argmax(), candidate_graph.shape)
+        maxind_row, maxind_col = indice
         assert (len(indice) == 2)
-        print('max indice:',sign,nodeindex)
-        print('maxw:',maxw)
+        # print('max indice:',indice,maxind_row,maxind_col)
+        # print('maxweight:',maxw)
 
-        if(sign==0):
+        if(maxind_row==0):
             #newly find nodeid is neg
-            nodeid=-(abs(nodeindex))
-        elif(sign==1):
+            nodeid=-(abs(maxind_col))
+        elif(maxind_row==1):
             #newly find nodeid is pos
-            nodeid=abs(nodeindex)
+            nodeid=+abs(maxind_col)
 
         #disable chosen id,set to negative
-        print('before set to neg:',matrix[:,:,nodeindex])
-        matrix[:,:,nodeindex]=-1
-        matrix[:, nodeid_prev, :] = -1
-        print('after set to neg:',matrix[:,:,nodeindex])
-        print('noid:',nodeid,'matrix:',matrix)
+        # print('before set to neg:',matrix[:,:,maxind_col])
+        matrix[:,:,maxind_col]=-1
+        # print('after set to neg:',matrix[:,:,maxind_col])
+        # print('chosen node state:',nodeid)
+        # print('updated matrix:',matrix)
         mystate.append(nodeid)
         nodeid_prev=nodeid
-    print('mystate:',mystate)
+    # print('mystate solution:',mystate)
     state=tuple(mystate)
-
+    
+    times=1
+    best_state,best_power=None,None
     for _ in range(times):
         # state = tuple(i * (-1)**random.randrange(1, 3) for i in range(1, n+1))
         power = power_by_mtt(state, edges)
@@ -148,8 +155,28 @@ def greedy_algorithm():
             best_state = state
             best_power = power
     assert best_state is not None
+
+    endt=time.time()
+    elapsed_time=endt-startt
     print ' '.join('%+d' % i for i in best_state)
-    print power
+    print best_power
+    print ('greedy elapsed time:',elapsed_time//60,'min',elapsed_time%60,'s')
+
+    return  best_power
+
+def main():
+    power_rand,power_greed,best_power=None,None,None
+    power_rand=randomized_algorithm()
+    power_greed=greedy_algorithm()
+    print('greedy power:',power_greed)
+    print('random power:',power_rand)
+    if power_rand>power_greed:
+        best_power=power_rand
+        print('random algorithm is better,best power is')
+    else:
+        best_power=power_greed
+        print('greedy algorithm is better,best power is')
+    print(best_power)
 
 
 def read_input():
@@ -163,5 +190,15 @@ def read_input():
 
 
 if __name__ == '__main__':
-    #randomized_algorithm()
-    greedy_algorithm()
+    # #
+    # greedy_algorithm()
+    # construct_graph()
+    startt=time.time()
+
+    # greedy_algorithm()
+    # randomized_algorithm()
+    main()
+
+    endtt=time.time()
+    elapsed=endtt-startt
+    print('runtime in total is ',elapsed//60,'min',elapsed%60,'s')
