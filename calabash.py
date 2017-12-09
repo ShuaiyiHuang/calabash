@@ -96,9 +96,6 @@ def construct_graph():
 
     matrix = np.concatenate([np.expand_dims(neg_toneg, 0), np.expand_dims(neg_topos, 0), np.expand_dims(pos_toneg, 0),
                              np.expand_dims(pos_topos, 0)], 0)
-    print(matrix[0].shape)
-    print(matrix[1].shape)
-    print(matrix[3])
 
     # print('preliminary negtoneg,negtopost,postoneg,postopos matrix:', matrix)
     return n,edges,matrix
@@ -162,16 +159,35 @@ def compute_power(state,edges):
             best_state = state
             best_power = power
     assert best_state is not None
-
-
     print ' '.join('%+d' % i for i in best_state)
     print best_power
     return  best_power
 
+
+
 def greedy_main():
     state,edges=greedy_algorithm()
-    best_power=compute_power(state,edges)
+    n=len(state)
+    state=list(state)
+    best_power=power_by_mtt(state,edges)
+    print('initial states:',state)
+    print('initial best power:',best_power)
+    for i in range(n):
+        # new_states = list(state)
+        state[i]*=-1
+        # print(i+1,'new state for comput:',new_states)
+        power=power_by_mtt(state,edges)
+        if power>best_power:
+            best_power=power
+            print('update at node,',i+1,'new power:',best_power)
+            # state=new_states
+            best_states=state
+
+    print('greedy best power:',best_power)
+    print('best states:',best_states)
     return best_power
+
+
 
 def main():
     power_rand,power_greed,best_power=None,None,None
@@ -204,9 +220,9 @@ if __name__ == '__main__':
     # construct_graph()
     startt=time.time()
 
-    # greedy_algorithm()
+    greedy_main()
     # randomized_algorithm()
-    main()
+    # main()
 
     endtt=time.time()
     elapsed=endtt-startt
