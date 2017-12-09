@@ -149,6 +149,34 @@ def greedy_algorithm():
 
     return state,edges
 
+# def greedy_algorithm2():
+#     #not works well
+#     startt=time.time()
+#
+#     n,edges,graph=construct_graph()
+#     mystate=[]
+#
+#     for i in range(1,n+1):
+#         print('iter',i,'------------------------')
+#         fromneg=[0,1]
+#         frompos=[2,3]
+#         graph_fromneg=graph[fromneg,i,:]
+#         assert (graph_fromneg.shape==(2,n+1))
+#         graph_frompos=graph[frompos,i,:]
+#         weight_fromneg=np.sum(graph_fromneg)
+#         weight_frompos=np.sum(graph_frompos)
+#         nodeid=i if weight_frompos>weight_fromneg else -i
+#         mystate.append(nodeid)
+#         print('weightfromneg,weightfrompos,chosenid:',weight_fromneg,weight_frompos,nodeid)
+#
+#     state=tuple(mystate)
+#
+#     endt=time.time()
+#     elapsed_time=endt-startt
+#     print ('greedy elapsed time:',elapsed_time//60,'min',elapsed_time%60,'s')
+#
+#     return state,edges
+
 def compute_power(state,edges):
     times=1
     best_state,best_power=None,None
@@ -163,13 +191,14 @@ def compute_power(state,edges):
     print best_power
     return  best_power
 
-
-
 def greedy_main():
     state,edges=greedy_algorithm()
     n=len(state)
     state=list(state)
+
+    #initialize best
     best_power=power_by_mtt(state,edges)
+    best_states=list(state)
     print('initial states:',state)
     print('initial best power:',best_power)
     for i in range(n):
@@ -181,8 +210,22 @@ def greedy_main():
             best_power=power
             print('update at node,',i+1,'new power:',best_power)
             # state=new_states
-            best_states=state
-
+            best_states=list(state)
+    times=10
+    print('random.......')
+    state_rand = list(best_states)
+    select_list=range(1,n+1)
+    for i in range(times):
+        rand_id=random.sample(select_list,2)
+        new_state=list(state_rand)
+        for ind in rand_id:
+            new_state[ind]*=-1
+        power = power_by_mtt(new_state, edges)
+        if power>best_power:
+            best_power=power
+            print('update at node,',i+1,'new power:',best_power)
+            # state=new_states
+            best_states=list(new_state)
     print('greedy best power:',best_power)
     print('best states:',best_states)
     return best_power
