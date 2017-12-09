@@ -101,12 +101,12 @@ def construct_graph():
     print(matrix[3])
 
     # print('preliminary negtoneg,negtopost,postoneg,postopos matrix:', matrix)
-    return n,edges,state,matrix
+    return n,edges,matrix
 
 def greedy_algorithm():
     startt=time.time()
 
-    n,edges,graph_state,matrix=construct_graph()
+    n,edges,matrix=construct_graph()
     mystate=[]
     nodeid_prev=0
     for i in range(1,n+1):
@@ -145,7 +145,14 @@ def greedy_algorithm():
         nodeid_prev=nodeid
     # print('mystate solution:',mystate)
     state=tuple(mystate)
-    
+
+    endt=time.time()
+    elapsed_time=endt-startt
+    print ('greedy elapsed time:',elapsed_time//60,'min',elapsed_time%60,'s')
+
+    return state,edges
+
+def compute_power(state,edges):
     times=1
     best_state,best_power=None,None
     for _ in range(times):
@@ -156,18 +163,20 @@ def greedy_algorithm():
             best_power = power
     assert best_state is not None
 
-    endt=time.time()
-    elapsed_time=endt-startt
+
     print ' '.join('%+d' % i for i in best_state)
     print best_power
-    print ('greedy elapsed time:',elapsed_time//60,'min',elapsed_time%60,'s')
-
     return  best_power
+
+def greedy_main():
+    state,edges=greedy_algorithm()
+    best_power=compute_power(state,edges)
+    return best_power
 
 def main():
     power_rand,power_greed,best_power=None,None,None
     power_rand=randomized_algorithm()
-    power_greed=greedy_algorithm()
+    power_greed=greedy_main()
     print('greedy power:',power_greed)
     print('random power:',power_rand)
     if power_rand>power_greed:
