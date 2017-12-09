@@ -2,6 +2,7 @@ import numpy as np
 import time
 import random
 from numpy import unravel_index
+import os
 
 def power_by_mtt(state, edges):
     """Calculate the total power of the state, by the matrix-tree theorem.
@@ -228,7 +229,8 @@ def greedy_main():
             best_states=list(new_state)
     print('greedy best power:',best_power)
     print('best states:',best_states)
-    return best_power
+    assert (best_power==power_by_mtt(best_states,edges))
+    return best_power,best_states
 
 
 
@@ -263,7 +265,18 @@ if __name__ == '__main__':
     # construct_graph()
     startt=time.time()
 
-    greedy_main()
+    best_power,best_states=greedy_main()
+
+    path='./output'
+    if not os.path.exists(path):
+        os.mkdir(path)
+    with open(os.path.join(path,'1'),'w') as f:
+        string_states = [str(nodestate) for nodestate in list(best_states)]
+
+        string_states = ' '.join(string_states)
+        f.write(string_states)
+        f.close()
+
     # randomized_algorithm()
     # main()
 
