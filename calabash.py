@@ -40,8 +40,8 @@ def randomized_algorithm():
             best_state = rand_state
             best_power = power
     assert best_state is not None
-    print ' '.join('%+d' % i for i in best_state)
-    print 'random algorithm best power:',best_power
+    print(' '.join('%+d' % i for i in best_state))
+    print('random algorithm best power:',best_power)
     return best_power
 
 def construct_graph():
@@ -188,8 +188,8 @@ def compute_power(state,edges):
             best_state = state
             best_power = power
     assert best_state is not None
-    print ' '.join('%+d' % i for i in best_state)
-    print best_power
+    print(' '.join('%+d' % i for i in best_state))
+    print (best_power)
     return  best_power
 
 def greedy_main():
@@ -251,10 +251,12 @@ def main():
 
 def read_input():
     def one_edge():
-        line = raw_input()
+        line = input()
+        # line = raw_input()
         u, v, w = line.split()
         return int(u), int(v), float(w)
-    n = int(raw_input())
+    # n = int(raw_input())
+    n = int(input())
     edges = [one_edge() for _ in range(4 * n**2 - 2*n)]
     return n, edges
 
