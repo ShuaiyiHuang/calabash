@@ -69,6 +69,55 @@ def power_by_mtt_fast_debug(state,edges):
 
     return det
 
+
+def build_graph(n, edges):
+    graph = np.zeros((2*n+1, 2*n+1))
+    get_node = lambda x: abs(x)+ (x>0)*n
+    for i, edge in enumerate(edges):
+        u, v, w = edge
+        u, v = get_node(u), get_node(v)
+        graph[u,v] = w
+    return graph
+
+def calc_power(states, graph):
+    n = len(states)
+    get_node = lambda x: abs(x)+ (x>0)*n
+    states = [get_node(x) for x in states]
+    states.insert(0,0)
+    c_graph = graph[states]
+    c_graph = c_graph[:,states]
+    # import pdb; pdb.set_trace()
+    mat_l = -c_graph # This operation will invoke copy operation
+    ind = list(range(n+1))
+    mat_l[ind, ind] = np.sum(c_graph, axis=0)
+    det = np.linalg.det(mat_l[1:, 1:])
+    return det
+
+def power_by_mtt_fast2(state, graph):
+    """Calculate the total power of the state, by the matrix-tree theorem with vectorized code.
+    """
+    n = len(state)
+    get_node = lambda x: abs(x)+ (x>0)*n
+    state = [get_node(x) for x in state]
+    state.insert(0,0)
+    s_graph = graph[np.array(state)]
+    # import pdb;pdb.set_trace()
+    s_graph = s_graph[:,state]
+
+    diag=np.diagonal(s_graph)
+    colum_sum_vec=np.sum(s_graph,0)
+    new_digvalue=colum_sum_vec-diag
+    reverse_graph=-s_graph
+
+    indices_diag=np.diag_indices(n+1)
+
+    mat_l=reverse_graph
+    mat_l[indices_diag]=new_digvalue
+
+    det = np.linalg.det(mat_l[1:, 1:])
+    # print('new det:',det)
+    return det
+
 def power_by_mtt_fast(state,edges):
     """Calculate the total power of the state, by the matrix-tree theorem with vectorized code.
     """
@@ -111,31 +160,34 @@ def decode_int(input,numNode):
     return tuple(state)
 
 if __name__ == '__main__':
-    input_path='./input/sample'
+    input_path='./input/1'
     n,edges=read_input(input_path)
-    # state = tuple(i * (-1) ** random.randrange(1, 3) for i in range(1, n + 1))
-    # print('state:',state)
-    # elap1=0.0
-    # elap2=0.0
-    # for i in range(6000):
-    #     state = tuple(i * (-1) ** random.randrange(1, 3) for i in range(1, n + 1))
-    #     startt=time.time()
-    #     power_orig=power_by_mtt(state,edges)
-    #     endt=time.time()
-    #     elap1+=endt-startt
-    #     startt = time.time()
-    #     power_fast=power_by_mtt_fast(state,edges)
-    #     endt=time.time()
-    #     elap2+=endt-startt
-    #     assert (power_orig == power_fast)
-    # print('elap_orig:',elap1,'elap_fast:',elap2,'fast',elap1-elap2)
+    state = tuple(i * (-1) ** random.randrange(1, 3) for i in range(1, n + 1))
+    print('state:',state)
+    elap1=0.0
+    elap2=0.0
+    graph = build_graph(n, edges)
+    for i in range(6000):
+        state = tuple(i * (-1) ** random.randrange(1, 3) for i in range(1, n + 1))
+        startt=time.time()
+        power_orig=power_by_mtt(state,edges)
+        endt=time.time()
+        elap1+=endt-startt
 
-    state=decode_int(28108,n)
-    #test_state=(1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-    test_state=(0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0)
-    print('testis :',test_state)
-    print('mystate:',state)
-    assert (test_state==state)
-    print('state:', state)
-    power_fast = power_by_mtt_fast(state, edges)
-    print('best power',power_fast)
+        startt = time.time()
+        # power_fast=power_by_mtt_fast2(state,graph)
+        power_fast = calc_power(state,graph)
+        endt=time.time()
+        elap2+=endt-startt
+        assert (power_orig - power_fast <1e-6)
+    print('elap_orig:',elap1,'elap_fast:',elap2,'fast',elap1-elap2)
+
+    # state=decode_int(28108,n)
+    # #test_state=(1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+    # test_state=(0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0)
+    # print('testis :',test_state)
+    # print('mystate:',state)
+    # assert (test_state==state)
+    # print('state:', state)
+    # power_fast = power_by_mtt_fast(state, edges)
+    # print('best power',power_fast)

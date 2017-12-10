@@ -11,12 +11,10 @@ from gaft.analysis.fitness_store import FitnessStore
 from gaft import GAEngine
 from gaft.components import GAIndividual
 from gaft.components import GAPopulation
-from gaft.operators import TournamentSelection, RouletteWheelSelection
+from gaft.operators import TournamentSelection
 from gaft.operators import UniformCrossover
 from gaft.operators import FlipBitMutation
-
-graph = None
-
+import copy
 
 def read_input(input_path):
     if not os.path.exists(input_path):
@@ -83,46 +81,37 @@ def power_by_mtt_fast(state,edges):
     return det
 
 
-def build_graph(n, edges):
-    graph = np.zeros((2*n+1, 2*n+1))
-    get_node = lambda x: abs(x)+ (x>0)*n
-    for i, edge in enumerate(edges):
-        u, v, w = edge
-        u, v = get_node(u), get_node(v)
-        graph[u,v] = w
-    return graph
-
-def power_fast3(states, graph):
-    n = len(states)
-    get_node = lambda x: abs(x)+ (x>0)*n
-    states = [get_node(x) for x in states]
-    states.insert(0,0)
-    c_graph = graph[states]
-    c_graph = c_graph[:,states]
-    # import pdb; pdb.set_trace()
-    mat_l = -c_graph # This operation will invoke copy operation
-    ind = list(range(n+1))
-    mat_l[ind, ind] = np.sum(c_graph, axis=0)
-    det = np.linalg.det(mat_l[1:, 1:])
-    return det
 
 if __name__ == '__main__':
-    random.seed(30)
-    np.random.seed(22)
-    input_path='./input/2'
+    random.seed(20)
+
+    input_path='./input/1'
     output_path = './output'
     filename='2'
     n,edges=read_input(input_path)
     maxValue = 2 ** n
-    pop_size=1500
-    graph = build_graph(n, edges)
+    pop_size=100
+
+
+    init_integer = 1125899906842624
+    myindvidual_list = []
+    for i in range(pop_size):
+        myindividual = copy.copy(GAIndividual(ranges=[(0, maxValue)], encoding='binary', eps=[1]))
+        myindividual.variants = init_integer + 1
+        myindvidual_list.append(myindividual)
+
+    for i, individual in enumerate(myindvidual_list):
+        myvar = individual.varants
+        print('i:', i, 'myvar:', myvar)
+        mystate = decode_int(myvar)
+        print('mystate:', mystate)
 
     indv_template = GAIndividual(ranges=[(0, maxValue)], encoding='binary', eps=[1])
     population = GAPopulation(indv_template=indv_template, size=pop_size).init()
 
     # Create genetic operators.
-    selection = TournamentSelection()#RouletteWheelSelection()
-    crossover = UniformCrossover(pc=0.8, pe=0.9)
+    selection = TournamentSelection()
+    crossover = UniformCrossover(pc=0.9, pe=0.9)
     mutation = FlipBitMutation(pm=0.1)
 
     # Create genetic algorithm engine.
@@ -136,8 +125,7 @@ if __name__ == '__main__':
         x_decode = indv.chromsome
 
         state = decode_sequence(x_decode)
-        # power = power_by_mtt_fast(state, edges)
-        power = power_fast3(state, graph)
+        power = power_by_mtt_fast(state, edges)
         # print('power:',indv.variants,indv.chromsome,power)
         return float(power)
 
@@ -162,7 +150,7 @@ if __name__ == '__main__':
             self.logger.info(msg)
 
 
-    engine.run(ng=150)
+    engine.run(ng=30)
 
     best_indv = population.best_indv(engine.fitness)
     x_decode = best_indv.chromsome
