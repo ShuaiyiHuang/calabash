@@ -54,14 +54,14 @@ def power_by_mtt(state, edges):
     det = np.linalg.det(mat_l[1:, 1:])
     return det
 
-# numNode=2
+# numNode=16
 def decode_int(input):
     int_tostring_func = lambda x, n: format(x, 'b').zfill(n)
-    print('input:',input,type(input))
+    #print('input:',input,type(input))
     input=int(np.around(input))
-    print('input after:',input,type(input))
+    #print('input after:',input,type(input))
     string=int_tostring_func(input,numNode)
-    print('decoded string:',string)
+    #print('decoded string:',string)
     state=[]
     for i,stritem in enumerate(string):
         bit=int(stritem)
@@ -78,6 +78,7 @@ def decode_sequence(seq):
     state=[]
     for nodeid,bit in enumerate(seq):
         bit=int(bit)
+        # print('bit:',bit)
         if bit==0:
             nodestate=abs(nodeid)
         else:
@@ -95,21 +96,21 @@ from gaft.plugin_interfaces.analysis import OnTheFlyAnalysis
 from gaft.analysis.fitness_store import FitnessStore
 
 # Define population.
-maxValue=2**numNode
-myranges=[]
-for i in range(numNode):
-    myranges.append((0,1))
-myeps=np.ones(numNode)
+maxValue=2**numNode-1
+# myranges=[]
+# for i in range(numNode):
+#     myranges.append((0,1))
+# myeps=np.ones(numNode)
 # indv_template = GAIndividual(ranges=[(0, maxValue)], encoding='binary', eps=[1])
 # myindividual=GAIndividual(ranges=[(0, maxValue)], encoding='binary', eps=[1])
 # myindividual.variants=
-print('myarrages,myeps',myranges,myeps)
-indv_template = GAIndividual(ranges=myranges, encoding='decimal', eps=myeps)
-population = GAPopulation(indv_template=indv_template, size=50).init()
+#print('myarrages,myeps',myranges,myeps)
+indv_template = GAIndividual(ranges=[(0,maxValue)], encoding='binary', eps=[1])
+population = GAPopulation(indv_template=indv_template, size=10).init()
 
 # Create genetic operators.
 selection = TournamentSelection()
-crossover = UniformCrossover(pc=0.8, pe=0.5)
+crossover = UniformCrossover(pc=0.9, pe=0.9)
 mutation = FlipBitMutation(pm=0.1)
 
 # Create genetic algorithm engine.
@@ -121,17 +122,14 @@ engine = GAEngine(population=population, selection=selection,
 @engine.fitness_register
 #maximize fitness
 def fitness(indv):
-    x= indv.variants
-    print('x variants:',x,type(x))
-    x_decode=indv.decode()
-    print('x devode:',x_decode)
+    # print('x variants:',x,type(x))
+    x_decode=indv.chromsome
+    # print('x devode:',x_decode)
     # state=decode_int(x)
-    state=decode_sequence(x)
+    state=decode_sequence(x_decode)
     power=power_by_mtt(state,edges)
-    print('x',x,type(x),'power:',power)
-    print('state:',state)
-    # return x + 10*sin(5*x) + 7*cos(4*x)
-    #return -x**2+6*x-6
+    # print('x',x,type(x),'power:',power)
+    # print('state:',state)
     return float(power)
 
 # Define on-the-fly analysis.
@@ -155,6 +153,13 @@ class ConsoleOutputAnalysis(OnTheFlyAnalysis):
 
 if '__main__' == __name__:
     # Run the GA engine.
-    engine.run(ng=100)
-    # state=decode_int(2.99)
-    # print('state:',state)
+    random.seed(10)
+    engine.run(ng=10)
+    #state: (1, -2, 3, -4, 5, -6, 7, -8, -9, -10, -11, 12, -13, 14, -15, 16)
+
+    # n,edges=read_input()
+    # #state=decode_int(21993)
+    # state=(1, -2, 3, -4, 5, -6, 7, -8, -9, -10, -11, 12, -13, 14, -15, 16)
+    # print('best state',state)
+    # power=power_by_mtt(state,edges)
+    # print('power:',power)
