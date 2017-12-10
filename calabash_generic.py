@@ -74,6 +74,18 @@ def decode_int(input):
         state.append(nodestate)
     return tuple(state)
 
+def decode_sequence(seq):
+    state=[]
+    for nodeid,bit in enumerate(seq):
+        bit=int(bit)
+        if bit==0:
+            nodestate=abs(nodeid)
+        else:
+            assert (bit==1)
+            nodestate=-abs(nodeid)
+        state.append(nodestate)
+    return tuple(state)
+
 numNode,edges=read_input()
 
 # Analysis plugin base class.
@@ -83,7 +95,16 @@ from gaft.plugin_interfaces.analysis import OnTheFlyAnalysis
 from gaft.analysis.fitness_store import FitnessStore
 
 # Define population.
-indv_template = GAIndividual(ranges=[[0, 2]], encoding='binary', eps=0.001)
+maxValue=2*numNode
+myranges=[]
+for i in range(numNode):
+    myranges.append((0,1))
+myeps=np.ones(numNode)
+# indv_template = GAIndividual(ranges=[(0, maxValue)], encoding='binary', eps=[1])
+# myindividual=GAIndividual(ranges=[(0, maxValue)], encoding='binary', eps=[1])
+# myindividual.variants=
+print('myarrages,myeps',myranges,myeps)
+indv_template = GAIndividual(ranges=myranges, encoding='decimal', eps=myeps)
 population = GAPopulation(indv_template=indv_template, size=50).init()
 
 # Create genetic operators.
@@ -100,15 +121,18 @@ engine = GAEngine(population=population, selection=selection,
 @engine.fitness_register
 #maximize fitness
 def fitness(indv):
-    x, = indv.variants
+    x= indv.variants
+    print('x variants:',x,type(x))
     x_decode=indv.decode()
-    state=decode_int(x)
+    print('x devode:',x_decode)
+    # state=decode_int(x)
+    state=decode_sequence(x)
     power=power_by_mtt(state,edges)
     print('x',x,type(x),'power:',power)
     print('state:',state)
     # return x + 10*sin(5*x) + 7*cos(4*x)
     #return -x**2+6*x-6
-    return power
+    return float(power)
 
 # Define on-the-fly analysis.
 @engine.analysis_register
