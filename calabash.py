@@ -258,6 +258,7 @@ def read_input():
     # n = int(raw_input())
     n = int(input())
     edges = [one_edge() for _ in range(4 * n**2 - 2*n)]
+    print('muedges',edges)
     return n, edges
 
 
