@@ -33,6 +33,16 @@ def read_input(input_path):
         f.close()
     return n,edges
 
+def write_output(best_states,path,filename):
+    if not os.path.exists(path):
+        os.mkdir(path)
+    with open(os.path.join(path,filename),'w') as f:
+        string_states = [str(nodestate) for nodestate in list(best_states)]
+
+        string_states = ' '.join(string_states)
+        f.write(string_states)
+        f.close()
+
 def decode_sequence(seq):
     state=[]
     for i,bit in enumerate(seq):
@@ -72,6 +82,8 @@ if __name__ == '__main__':
     random.seed(10)
 
     input_path='./input/1'
+    output_path = './output'
+    filename='small_gaft'
     n,edges=read_input(input_path)
     maxValue = 2 ** n
     pop_size=600
@@ -96,7 +108,7 @@ if __name__ == '__main__':
 
         state = decode_sequence(x_decode)
         power = power_by_mtt_fast(state, edges)
-
+        # print('power:',indv.variants,indv.chromsome,power)
         return float(power)
 
 
@@ -120,5 +132,16 @@ if __name__ == '__main__':
 
 
     engine.run(ng=10)
+
+    best_indv = population.best_indv(engine.fitness)
+    x_decode = best_indv.chromsome
+    best_state=decode_sequence(x_decode)
+    best_power=power_by_mtt_fast(best_state,edges)
+    print('best state:',best_state)
+    print('best power:',best_power)
+
+    write_output(best_state,output_path,filename)
+
+
 
 

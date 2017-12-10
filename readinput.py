@@ -94,7 +94,7 @@ def power_by_mtt_fast(state,edges):
 def decode_int(input,numNode):
     int_tostring_func = lambda x, n: format(x, 'b').zfill(n)
     #print('input:',input,type(input))
-    input=int(np.around(input))
+    # input=int(np.around(input))
     #print('input after:',input,type(input))
     string=int_tostring_func(input,numNode)
     print('decoded string:',string)
@@ -111,7 +111,7 @@ def decode_int(input,numNode):
     return tuple(state)
 
 if __name__ == '__main__':
-    input_path='./input/1'
+    input_path='./input/sample'
     n,edges=read_input(input_path)
     # state = tuple(i * (-1) ** random.randrange(1, 3) for i in range(1, n + 1))
     # print('state:',state)
@@ -130,7 +130,12 @@ if __name__ == '__main__':
     #     assert (power_orig == power_fast)
     # print('elap_orig:',elap1,'elap_fast:',elap2,'fast',elap1-elap2)
 
-    state=decode_int(6,n)
+    state=decode_int(28108,n)
+    #test_state=(1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+    test_state=(0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0)
+    print('testis :',test_state)
+    print('mystate:',state)
+    assert (test_state==state)
     print('state:', state)
     power_fast = power_by_mtt_fast(state, edges)
     print('best power',power_fast)
