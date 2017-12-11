@@ -109,12 +109,12 @@ def power_fast3(states, graph):
 if __name__ == '__main__':
     random.seed(30)
     np.random.seed(22)
-    input_path='./input/2'
+    input_path='./input/3'
     output_path = './output'
     filename='2'
     n,edges=read_input(input_path)
     maxValue = 2 ** n
-    pop_size=1500
+    pop_size=10000
     graph = build_graph(n, edges)
 
     indv_template = GAIndividual(ranges=[(0, maxValue)], encoding='binary', eps=[1])
@@ -162,7 +162,7 @@ if __name__ == '__main__':
             self.logger.info(msg)
 
 
-    engine.run(ng=150)
+    engine.run(ng=300)
 
     best_indv = population.best_indv(engine.fitness)
     x_decode = best_indv.chromsome
