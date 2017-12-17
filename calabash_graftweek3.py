@@ -145,20 +145,20 @@ if __name__ == '__main__':
                         help='output path')
     parser.add_argument('--inputpath', type=str, default='./input',
                         help='output path')
-    parser.add_argument('--filename', type=str, default='4',
+    parser.add_argument('--filename', type=str, default='3',
                         help='filename')
 
     parser.add_argument('--tselect', type=int, default=1,
                         help='1:TournamentSelection,0:RouletteWheelSelection')
-    parser.add_argument('--popsize', type=int, default=500,
+    parser.add_argument('--popsize', type=int, default=10000,
                         help='size of population')
     parser.add_argument('--pc', type=float, default=0.8,
                         help='probability of cross over')
     parser.add_argument('--pe', type=float, default=0.9,
                         help='probability of exchange')
-    parser.add_argument('--pm', type=float, default=0.2,
+    parser.add_argument('--pm', type=float, default=0.1,
                         help='probability of mutation')
-    parser.add_argument('--numEpoch', type=int, default=10,
+    parser.add_argument('--numEpoch', type=int, default=170,
                         help='num of generation')
 
     parser.add_argument('--rseed', type=int, default=30,
