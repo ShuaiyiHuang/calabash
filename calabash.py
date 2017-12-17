@@ -93,8 +93,6 @@ def construct_graph():
     # print('pos to neg:/n', pos_toneg)
     # print('pos to pos:' + '/n', pos_topos)
 
-    state = np.arange(1,n+1)
-
     matrix = np.concatenate([np.expand_dims(neg_toneg, 0), np.expand_dims(neg_topos, 0), np.expand_dims(pos_toneg, 0),
                              np.expand_dims(pos_topos, 0)], 0)
 

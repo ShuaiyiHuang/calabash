@@ -37,7 +37,9 @@ def read_input(input_path):
     return n,edges
 
 def write_output(best_states,path,filename):
+    print('path:', path)
     if not os.path.exists(path):
+
         os.mkdir(path)
     with open(os.path.join(path,filename),'w') as f:
         string_states = [str(nodestate) for nodestate in list(best_states)]
@@ -47,6 +49,7 @@ def write_output(best_states,path,filename):
         f.close()
 
 def decode_sequence(seq):
+    # 0 :positive;1:negative
     state=[]
     for i,bit in enumerate(seq):
         nodeid = i + 1
@@ -59,20 +62,72 @@ def decode_sequence(seq):
         state.append(nodestate)
     return tuple(state)
 
-# get_sign = lambda s: -1 if s==1 else 1
-# decode_sequence = lambda seq: [i*get_sign(s) for i,s in enumerate(seq,1)]
+def construct_graph(input_path):
+    import random
+    random.seed(0)
 
-def power_by_mtt_fast(state,edges):
-    """Calculate the total power of the state, by the matrix-tree theorem with vectorized code.
-    """
-    n = len(state)
-    graph = np.zeros((n+1, n+1), dtype=np.float64)
-    for u, v, w in edges:
-        if (u == 0 or u in state) and v in state:
-            graph[abs(u), abs(v)] = w
-    colum_sum_vec=np.sum(graph,0)
+    n, edges = read_input(input_path)
+
+    startt = time.time()
+    # for each starting store max weight
+    pos_topos, pos_toneg, neg_topos, neg_toneg = np.zeros((n + 1, n + 1), dtype=float),np.zeros((n + 1, n + 1), dtype=float),np.zeros((n + 1, n + 1), dtype=float),np.zeros((n + 1, n + 1), dtype=float)
+
+    for edge in edges:
+        u, v, w = edge
+        indu = abs(u)
+        indv = abs(v)
+        assert (type(u) == int and type(v) == int and type(w) == float)
+        if u > 0 and v > 0:
+            pos_topos[indu, indv] = w
+        if u > 0 and v < 0:
+            pos_toneg[indu, indv] = w
+        if u < 0 and v > 0:
+            neg_topos[indu, indv] = w
+        if u < 0 and v < 0:
+            neg_toneg[indu, indv] = w
+        if u == 0:
+            if v > 0:
+                neg_topos[indu, indv] = w
+                pos_topos[indu, indv] = w
+            if v < 0:
+                neg_toneg[indu, indv] = w
+                pos_toneg[indu, indv] = w
+
+    assert (neg_topos[0, :].all() == pos_topos[0, :].all())
+    assert (pos_toneg[0, :].all() == neg_toneg[0, :].all())
+
+    # graph = np.concatenate([np.expand_dims(neg_toneg, 0), np.expand_dims(neg_topos, 0), np.expand_dims(pos_toneg, 0),
+    #                          np.expand_dims(pos_topos, 0)], 0)
+    graph_frompos=np.concatenate((pos_topos,pos_toneg),1)
+    assert (graph_frompos.shape==(n+1,2*(n+1)))
+    graph_fromneg=np.concatenate((neg_topos,neg_toneg),1)
+    assert(graph_fromneg.shape==(n+1,2*(n+1)))
+    graph=np.concatenate((graph_frompos,graph_fromneg),0)
+    assert (graph.shape==(2*(n+1),2*(n+1)))
+
+    endt = time.time()
+    print('index finished in {}'.format((endt - startt)))
+
+    return n,edges,graph
+
+
+def power_by_mtt_fastgraph(states, graph):
+    n = len(states)
+    #pos then neg
+
+    states_ind=[0]
+    for i,nodestate in enumerate(states):
+        #pos 0,neg 1
+        sign=1 if nodestate<0 else 0
+        ind_insubgraph=abs(nodestate)+sign*(n+1)
+        states_ind.append(ind_insubgraph)
+
+    subgraph = graph[states_ind]
+    subgraph = subgraph[:,states_ind]
+
+    colum_sum_vec=np.sum(subgraph,0)
     new_digvalue=colum_sum_vec
-    reverse_graph=-graph
+    reverse_graph=-subgraph
 
     indices_diag=np.diag_indices(n+1)
 
@@ -82,48 +137,22 @@ def power_by_mtt_fast(state,edges):
     det = np.linalg.det(mat_l[1:, 1:])
     return det
 
-
-def build_graph(n, edges):
-    graph = np.zeros((2*n+1, 2*n+1))
-    get_node = lambda x: abs(x)+ (x>0)*n
-    for i, edge in enumerate(edges):
-        u, v, w = edge
-        u, v = get_node(u), get_node(v)
-        graph[u,v] = w
-    return graph
-
-def power_fast3(states, graph):
-    n = len(states)
-    get_node = lambda x: abs(x)+ (x>0)*n
-    states = [get_node(x) for x in states]
-    states.insert(0,0)
-    c_graph = graph[states]
-    c_graph = c_graph[:,states]
-    # import pdb; pdb.set_trace()
-    mat_l = -c_graph
-    ind = list(range(n+1))
-    mat_l[ind, ind] = np.sum(c_graph, axis=0)
-    det = np.linalg.det(mat_l[1:, 1:])
-    return det
-
 if __name__ == '__main__':
     random.seed(30)
     np.random.seed(22)
     input_path='./input/2'
     output_path = './output'
     filename='2'
-    n,edges=read_input(input_path)
-    maxValue = 2 ** n
-    pop_size=600
-    graph = build_graph(n, edges)
-
+    n,edges,graph=construct_graph(input_path)
+    maxValue = 2 ** n-1
+    pop_size=6000
     indv_template = GAIndividual(ranges=[(0, maxValue)], encoding='binary', eps=[1])
     population = GAPopulation(indv_template=indv_template, size=pop_size).init()
 
     # Create genetic operators.
     selection = TournamentSelection()#RouletteWheelSelection()
     crossover = UniformCrossover(pc=0.8, pe=0.9)
-    mutation = FlipBitMutation(pm=0.1)
+    mutation = FlipBitMutation(pm=0.2)
 
     # Create genetic algorithm engine.
     engine = GAEngine(population=population, selection=selection,
@@ -133,12 +162,10 @@ if __name__ == '__main__':
 
     @engine.fitness_register
     def fitness(indv):
+        # print('x variants',indv.variants)
         x_decode = indv.chromsome
-
         state = decode_sequence(x_decode)
-        # power = power_by_mtt_fast(state, edges)
-        power = power_fast3(state, graph)
-        # print('power:',indv.variants,indv.chromsome,power)
+        power = power_by_mtt_fastgraph(state, graph)
         return float(power)
 
 
@@ -167,7 +194,7 @@ if __name__ == '__main__':
     best_indv = population.best_indv(engine.fitness)
     x_decode = best_indv.chromsome
     best_state=decode_sequence(x_decode)
-    best_power=power_by_mtt_fast(best_state,edges)
+    best_power=power_by_mtt_fastgraph(best_state,graph)
     print('best state:',best_state)
     print('best power:',best_power)
 
