@@ -14,6 +14,7 @@ from gaft.components import GAPopulation
 from gaft.operators import TournamentSelection, RouletteWheelSelection
 from gaft.operators import UniformCrossover
 from gaft.operators import FlipBitMutation
+import argparse
 
 graph = None
 
@@ -138,21 +139,71 @@ def power_by_mtt_fastgraph(states, graph):
     return det
 
 if __name__ == '__main__':
-    random.seed(30)
-    np.random.seed(22)
-    input_path='./input/2'
-    output_path = './output'
-    filename='2'
-    n,edges,graph=construct_graph(input_path)
+
+    parser = argparse.ArgumentParser(description='tune calabash')
+    parser.add_argument('--outputpath', type=str, default='./output',
+                        help='output path')
+    parser.add_argument('--inputpath', type=str, default='./input',
+                        help='output path')
+    parser.add_argument('--filename', type=str, default='2',
+                        help='filename')
+
+    parser.add_argument('--tselect', type=int, default=1,
+                        help='1:TournamentSelection,0:RouletteWheelSelection')
+    parser.add_argument('--popsize', type=int, default=1500,
+                        help='size of population')
+    parser.add_argument('--pc', type=float, default=0.8,
+                        help='probability of cross over')
+    parser.add_argument('--pe', type=float, default=0.9,
+                        help='probability of exchange')
+    parser.add_argument('--pm', type=float, default=0.2,
+                        help='probability of mutation')
+    parser.add_argument('--numEpoch', type=int, default=250,
+                        help='num of generation')
+
+    parser.add_argument('--rseed', type=int, default=30,
+                        help='random.seed')
+    parser.add_argument('--npseed', type=int, default=32,
+                        help='np.random.seed')
+
+    args = parser.parse_args()
+    print(args)
+    #path args
+    inputpath = args.inputpath
+    outputpath = args.outputpath
+    filename=args.filename
+
+    #model tuning args
+    popsize = args.popsize
+    pc = args.pc
+    pe = args.pe
+    pm = args.pm
+    numEpoch = args.numEpoch
+    rseed=args.rseed
+    npseed=args.npseed
+    tselect=args.tselect
+
+    random.seed(rseed)
+    np.random.seed(npseed)
+    inputdir= os.path.join(inputpath,filename)
+
+    n,edges,graph=construct_graph(inputdir)
     maxValue = 2 ** n-1
-    pop_size=6000
+
     indv_template = GAIndividual(ranges=[(0, maxValue)], encoding='binary', eps=[1])
-    population = GAPopulation(indv_template=indv_template, size=pop_size).init()
+    population = GAPopulation(indv_template=indv_template, size=popsize).init()
 
     # Create genetic operators.
-    selection = TournamentSelection()#RouletteWheelSelection()
-    crossover = UniformCrossover(pc=0.8, pe=0.9)
-    mutation = FlipBitMutation(pm=0.2)
+    # selection = TournamentSelection()#RouletteWheelSelection()
+    if tselect:
+        print('Tournament selection')
+        selection = TournamentSelection()
+    else:
+        print('RouletteWheelSelection')
+        selection = RouletteWheelSelection()
+
+    crossover = UniformCrossover(pc=pc, pe=pe)
+    mutation = FlipBitMutation(pm=pm)
 
     # Create genetic algorithm engine.
     engine = GAEngine(population=population, selection=selection,
@@ -188,8 +239,10 @@ if __name__ == '__main__':
             msg = 'Optimal solution: ({}, {})'.format(x, y)
             self.logger.info(msg)
 
-
-    engine.run(ng=150)
+    startt=time.time()
+    engine.run(ng=numEpoch)
+    endt=time.time()
+    print('Runing cost time:',(endt-startt)//60,'min',(endt-startt),'s')
 
     best_indv = population.best_indv(engine.fitness)
     x_decode = best_indv.chromsome
@@ -198,7 +251,7 @@ if __name__ == '__main__':
     print('best state:',best_state)
     print('best power:',best_power)
 
-    write_output(best_state,output_path,filename)
+    write_output(best_state, outputpath, filename)
 
 
 
