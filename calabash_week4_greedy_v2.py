@@ -88,10 +88,6 @@ def construct_graph(inputpath):
     assert (pos_toneg[0, :].all() == neg_toneg[0, :].all())
     print('index finished in {}'.format((endt - startt)))
 
-    # print ('neg to neg\n', neg_toneg)
-    # print('neg to pos:\n', neg_topos)
-    # print('pos to neg:/n', pos_toneg)
-    # print('pos to pos:' + '/n', pos_topos)
 
     matrix = np.concatenate([np.expand_dims(neg_toneg, 0), np.expand_dims(neg_topos, 0), np.expand_dims(pos_toneg, 0),
                              np.expand_dims(pos_topos, 0)], 0)
@@ -147,34 +143,6 @@ def greedy_algorithm(inputpath):
     print ('greedy elapsed time:',elapsed_time//60,'min',elapsed_time%60,'s')
 
     return state,edges
-
-# def greedy_algorithm2():
-#     #not works well
-#     startt=time.time()
-#
-#     n,edges,graph=construct_graph()
-#     mystate=[]
-#
-#     for i in range(1,n+1):
-#         print('iter',i,'------------------------')
-#         fromneg=[0,1]
-#         frompos=[2,3]
-#         graph_fromneg=graph[fromneg,i,:]
-#         assert (graph_fromneg.shape==(2,n+1))
-#         graph_frompos=graph[frompos,i,:]
-#         weight_fromneg=np.sum(graph_fromneg)
-#         weight_frompos=np.sum(graph_frompos)
-#         nodeid=i if weight_frompos>weight_fromneg else -i
-#         mystate.append(nodeid)
-#         print('weightfromneg,weightfrompos,chosenid:',weight_fromneg,weight_frompos,nodeid)
-#
-#     state=tuple(mystate)
-#
-#     endt=time.time()
-#     elapsed_time=endt-startt
-#     print ('greedy elapsed time:',elapsed_time//60,'min',elapsed_time%60,'s')
-#
-#     return state,edges
 
 def compute_power(state,edges):
     times=1
@@ -248,18 +216,6 @@ def main():
     print(best_power)
 
 
-# def read_input():
-#     def one_edge():
-#         line = input()
-#         # line = raw_input()
-#         u, v, w = line.split()
-#         return int(u), int(v), float(w)
-#     # n = int(raw_input())
-#     n = int(input())
-#     edges = [one_edge() for _ in range(4 * n**2 - 2*n)]
-#     print('muedges',edges)
-#     return n, edges
-
 def read_input(input_path):
     if not os.path.exists(input_path):
         print('Error:input file not exitst!')
@@ -290,16 +246,101 @@ def write_output(best_states,path,filename):
         f.write(string_states)
         f.close()
 
+def construct_whole_graph(input_path):
+    import random
+    random.seed(0)
+
+    n, edges = read_input(input_path)
+
+    startt = time.time()
+    # for each starting store max weight
+    pos_topos, pos_toneg, neg_topos, neg_toneg = np.zeros((n + 1, n + 1), dtype=float),np.zeros((n + 1, n + 1), dtype=float),np.zeros((n + 1, n + 1), dtype=float),np.zeros((n + 1, n + 1), dtype=float)
+
+    for edge in edges:
+        u, v, w = edge
+        indu = abs(u)
+        indv = abs(v)
+        assert (type(u) == int and type(v) == int and type(w) == float)
+        if u > 0 and v > 0:
+            pos_topos[indu, indv] = w
+        if u > 0 and v < 0:
+            pos_toneg[indu, indv] = w
+        if u < 0 and v > 0:
+            neg_topos[indu, indv] = w
+        if u < 0 and v < 0:
+            neg_toneg[indu, indv] = w
+        if u == 0:
+            if v > 0:
+                neg_topos[indu, indv] = w
+                pos_topos[indu, indv] = w
+            if v < 0:
+                neg_toneg[indu, indv] = w
+                pos_toneg[indu, indv] = w
+
+    assert (neg_topos[0, :].all() == pos_topos[0, :].all())
+    assert (pos_toneg[0, :].all() == neg_toneg[0, :].all())
+
+    # graph = np.concatenate([np.expand_dims(neg_toneg, 0), np.expand_dims(neg_topos, 0), np.expand_dims(pos_toneg, 0),
+    #                          np.expand_dims(pos_topos, 0)], 0)
+    graph_frompos=np.concatenate((pos_topos,pos_toneg),1)
+    assert (graph_frompos.shape==(n+1,2*(n+1)))
+    graph_fromneg=np.concatenate((neg_topos,neg_toneg),1)
+    assert(graph_fromneg.shape==(n+1,2*(n+1)))
+    graph=np.concatenate((graph_frompos,graph_fromneg),0)
+    assert (graph.shape==(2*(n+1),2*(n+1)))
+
+    endt = time.time()
+    print('index finished in {}'.format((endt - startt)))
+
+    return n,edges,graph
+
+def power_by_mtt_fastgraph(states, graph):
+    n = len(states)
+    #pos then neg
+
+    states_ind=[0]
+    for i,nodestate in enumerate(states):
+        #pos 0,neg 1
+        sign=1 if nodestate<0 else 0
+        ind_insubgraph=abs(nodestate)+sign*(n+1)
+        states_ind.append(ind_insubgraph)
+
+    subgraph = graph[states_ind]
+    subgraph = subgraph[:,states_ind]
+
+    colum_sum_vec=np.sum(subgraph,0)
+    new_digvalue=colum_sum_vec
+    reverse_graph=-subgraph
+
+    indices_diag=np.diag_indices(n+1)
+
+    mat_l=reverse_graph
+    mat_l[indices_diag]=new_digvalue
+
+    det = np.linalg.det(mat_l[1:, 1:])
+    return det
+
 if __name__ == '__main__':
 
-    inputpath='./input/4'
+    inputdpath='./input'
     outputpath='./output'
     filename='4'
+    inputdir = os.path.join(inputdpath, filename)
+
+
+    n, edges, graph = construct_whole_graph(inputdir)
 
     startt=time.time()
 
     # best_power,best_states=greedy_main(inputpath)
-    best_states,edges=greedy_algorithm(inputpath)
+    best_states,edges=greedy_algorithm(inputdir)
+
+    begin=time.time()
+    best_power=power_by_mtt_fastgraph(best_states,graph)
+    stop=time.time()
+    print('best power:',best_power,'power cost time',stop-begin,'s')
+
+
     write_output(best_states,outputpath,filename)
 
 
