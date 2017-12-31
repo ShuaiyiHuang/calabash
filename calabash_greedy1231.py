@@ -195,6 +195,7 @@ def greedy_main(inputpath):
     n=len(state)
     state=list(state)
     print('initial states:',state)
+
     #initialize best
     best_power=power_by_mtt(state,edges)
     best_states=list(state)
@@ -277,25 +278,40 @@ def read_input(input_path):
         f.close()
     return n,edges
 
+def write_output(best_states,path,filename):
+    print('path:', path)
+    if not os.path.exists(path):
+
+        os.mkdir(path)
+    with open(os.path.join(path,filename),'w') as f:
+        string_states = [str(nodestate) for nodestate in list(best_states)]
+
+        string_states = ' '.join(string_states)
+        f.write(string_states)
+        f.close()
 
 if __name__ == '__main__':
     # #
     # greedy_algorithm()
     # construct_graph()
     inputpath='./input/4'
+    outputpath='./output'
+    filename='4'
+
     startt=time.time()
 
-    best_power,best_states=greedy_main(inputpath)
-
-    path='./output'
-    if not os.path.exists(path):
-        os.mkdir(path)
-    with open(os.path.join(path,'1'),'w') as f:
-        string_states = [str(nodestate) for nodestate in list(best_states)]
-
-        string_states = ' '.join(string_states)
-        f.write(string_states)
-        f.close()
+    # best_power,best_states=greedy_main(inputpath)
+    best_states,edges=greedy_algorithm(inputpath)
+    write_output(best_states,outputpath,filename)
+    # path='./output'
+    # if not os.path.exists(path):
+    #     os.mkdir(path)
+    # with open(os.path.join(path,'1'),'w') as f:
+    #     string_states = [str(nodestate) for nodestate in list(best_states)]
+    #
+    #     string_states = ' '.join(string_states)
+    #     f.write(string_states)
+    #     f.close()
 
     # randomized_algorithm()
     # main()
