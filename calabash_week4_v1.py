@@ -17,138 +17,11 @@ from gaft.operators import UniformCrossover
 from gaft.operators import FlipBitMutation
 import argparse
 
+from calabash_utils import *
+
 graph = None
 
 
-def read_input(input_path):
-    if not os.path.exists(input_path):
-        print('Error:input file not exitst!')
-        return None,None
-
-    edges=[]
-    with open(input_path) as f:
-        lines = f.read().splitlines()
-        line0=lines[0]
-        print('numNode:',line0)
-        n=int(line0)
-        for i,line in enumerate(lines[1:]):
-            u, v, w = line.split()
-            one_edge=(int(u), int(v), float(w))
-            edges.append(one_edge)
-        f.close()
-    return n,edges
-
-def write_output(best_states,path,filename):
-    print('path:', path)
-    if not os.path.exists(path):
-
-        os.mkdir(path)
-    with open(os.path.join(path,filename),'w') as f:
-        string_states = [str(nodestate) for nodestate in list(best_states)]
-
-        string_states = ' '.join(string_states)
-        f.write(string_states)
-        f.close()
-
-def decode_sequence(seq):
-    # 0 :positive;1:negative
-    state=[]
-    for i,bit in enumerate(seq):
-        nodeid = i + 1
-        bit=int(bit)
-        if bit==0:
-            nodestate=abs(nodeid)
-        else:
-            assert (bit==1)
-            nodestate=-abs(nodeid)
-        state.append(nodestate)
-    return tuple(state)
-
-def binarize(decimal, eps, length):
-    '''
-    Helper function to convert a float to binary sequence.
-    :param decimal: the decimal number to be converted.
-    :param eps: the decrete precision of binary sequence.
-    :param length: the length of binary sequence.
-    '''
-    n = int(decimal/eps)
-    bin_str = '{:0>{}b}'.format(n, length)
-    return [int(i) for i in bin_str]
-
-def construct_graph(input_path):
-    import random
-    random.seed(0)
-
-    n, edges = read_input(input_path)
-
-    startt = time.time()
-    # for each starting store max weight
-    pos_topos, pos_toneg, neg_topos, neg_toneg = np.zeros((n + 1, n + 1), dtype=float),np.zeros((n + 1, n + 1), dtype=float),np.zeros((n + 1, n + 1), dtype=float),np.zeros((n + 1, n + 1), dtype=float)
-
-    for edge in edges:
-        u, v, w = edge
-        indu = abs(u)
-        indv = abs(v)
-        assert (type(u) == int and type(v) == int and type(w) == float)
-        if u > 0 and v > 0:
-            pos_topos[indu, indv] = w
-        if u > 0 and v < 0:
-            pos_toneg[indu, indv] = w
-        if u < 0 and v > 0:
-            neg_topos[indu, indv] = w
-        if u < 0 and v < 0:
-            neg_toneg[indu, indv] = w
-        if u == 0:
-            if v > 0:
-                neg_topos[indu, indv] = w
-                pos_topos[indu, indv] = w
-            if v < 0:
-                neg_toneg[indu, indv] = w
-                pos_toneg[indu, indv] = w
-
-    assert (neg_topos[0, :].all() == pos_topos[0, :].all())
-    assert (pos_toneg[0, :].all() == neg_toneg[0, :].all())
-
-    # graph = np.concatenate([np.expand_dims(neg_toneg, 0), np.expand_dims(neg_topos, 0), np.expand_dims(pos_toneg, 0),
-    #                          np.expand_dims(pos_topos, 0)], 0)
-    graph_frompos=np.concatenate((pos_topos,pos_toneg),1)
-    assert (graph_frompos.shape==(n+1,2*(n+1)))
-    graph_fromneg=np.concatenate((neg_topos,neg_toneg),1)
-    assert(graph_fromneg.shape==(n+1,2*(n+1)))
-    graph=np.concatenate((graph_frompos,graph_fromneg),0)
-    assert (graph.shape==(2*(n+1),2*(n+1)))
-
-    endt = time.time()
-    print('index finished in {}'.format((endt - startt)))
-
-    return n,edges,graph
-
-
-def power_by_mtt_fastgraph(states, graph):
-    n = len(states)
-    #pos then neg
-
-    states_ind=[0]
-    for i,nodestate in enumerate(states):
-        #pos 0,neg 1
-        sign=1 if nodestate<0 else 0
-        ind_insubgraph=abs(nodestate)+sign*(n+1)
-        states_ind.append(ind_insubgraph)
-
-    subgraph = graph[states_ind]
-    subgraph = subgraph[:,states_ind]
-
-    colum_sum_vec=np.sum(subgraph,0)
-    new_digvalue=colum_sum_vec
-    reverse_graph=-subgraph
-
-    indices_diag=np.diag_indices(n+1)
-
-    mat_l=reverse_graph
-    mat_l[indices_diag]=new_digvalue
-
-    det = np.linalg.det(mat_l[1:, 1:])
-    return det
 
 if __name__ == '__main__':
 
@@ -162,7 +35,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--tselect', type=int, default=1,
                         help='1:TournamentSelection,0:RouletteWheelSelection')
-    parser.add_argument('--popsize', type=int, default=1500,
+    parser.add_argument('--popsize', type=int, default=2000,
                         help='size of population')
     parser.add_argument('--pc', type=float, default=0.8,
                         help='probability of cross over')
@@ -213,8 +86,12 @@ if __name__ == '__main__':
     print('maxValue part1:',maxValue_part1)
     print('maxValue part2:',maxValue_part2)
     print('length part1 part2:',length_part1,length_part2)
-    indv_template = GAIndividual(ranges=[(0, maxValue_part1),(0,maxValue_part2)], encoding='binary', eps=[1,1])
 
+    var1,var2=greedy_initialize_variants(n,edges,length_part1,length_part2)
+
+    indv_template = GAIndividual(ranges=[(0, maxValue_part1),(0,maxValue_part2)], encoding='binary', eps=[1,1])
+    indv_template.variants=[var1,var2]
+    indv_template.chromsome=indv_template.encode()
     #####################Initialize approach2##############################
     # ranges_list = []
     # eps_list = []
@@ -225,8 +102,11 @@ if __name__ == '__main__':
     # print(len(eps_list),eps_list)
     # assert (len(ranges_list)==len(eps_list) and len(eps_list)==n)
     # indv_template = GAIndividual(ranges=ranges_list, encoding='binary', eps=eps_list)
+    indv_list=[]
+    for i in range(popsize):
+        indv_list.append(indv_template.clone())
 
-    population = GAPopulation(indv_template=indv_template, size=popsize).init()
+    population = GAPopulation(indv_template=indv_template, size=popsize).init(indv_list)
 
     # Create genetic operators.
     # selection = TournamentSelection()#RouletteWheelSelection()
@@ -266,7 +146,7 @@ if __name__ == '__main__':
         #     print('chrom:',chromsome)
         #     print('x_dec:',x_decode)
         # x_decode=indv.variants
-
+        # print('x_decode:',x_decode)
         assert (len(x_decode)==n)
         state = decode_sequence(x_decode)
         power = power_by_mtt_fastgraph(state, graph)

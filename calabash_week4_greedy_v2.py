@@ -4,6 +4,7 @@ import random
 from numpy import unravel_index
 import os
 
+
 def power_by_mtt(state, edges):
     """Calculate the total power of the state, by the matrix-tree theorem.
     """
@@ -44,7 +45,7 @@ def randomized_algorithm():
     print('random algorithm best power:',best_power)
     return best_power
 
-def construct_graph(inputpath):
+def construct_greedy_graph(inputpath):
     import random
     random.seed(0)
 
@@ -98,7 +99,7 @@ def construct_graph(inputpath):
 def greedy_algorithm(inputpath):
     startt=time.time()
 
-    n,edges,matrix=construct_graph(inputpath)
+    n,edges,matrix=construct_greedy_graph(inputpath)
     mystate=[]
     nodeid_prev=0
     for i in range(1,n+1):
@@ -127,12 +128,8 @@ def greedy_algorithm(inputpath):
             #newly find nodeid is pos
             nodeid=+abs(maxind_col)
 
-        #disable chosen id,set to negative
-        # print('before set to neg:',matrix[:,:,maxind_col])
         matrix[:,:,maxind_col]=-1
-        # print('after set to neg:',matrix[:,:,maxind_col])
-        # print('chosen node state:',nodeid)
-        # print('updated matrix:',matrix)
+
         mystate.append(nodeid)
         nodeid_prev=nodeid
     # print('mystate solution:',mystate)
@@ -158,14 +155,14 @@ def compute_power(state,edges):
     print (best_power)
     return  best_power
 
-def greedy_main(inputpath):
+def greedy_main(inputpath,graph):
     state,edges=greedy_algorithm(inputpath)
     n=len(state)
     state=list(state)
     print('initial states:',state)
 
     #initialize best
-    best_power=power_by_mtt(state,edges)
+    best_power=power_by_mtt_fastgraph(state,graph)
     best_states=list(state)
 
     print('initial best power:',best_power)
@@ -173,7 +170,7 @@ def greedy_main(inputpath):
         # new_states = list(state)
         state[i]*=-1
         # print(i+1,'new state for comput:',new_states)
-        power=power_by_mtt(state,edges)
+        power=power_by_mtt_fastgraph(state,graph)
         if power>best_power:
             best_power=power
             print('update at node,',i+1,'new power:',best_power)
@@ -188,7 +185,7 @@ def greedy_main(inputpath):
         new_state=list(state_rand)
         for ind in rand_id:
             new_state[ind]*=-1
-        power = power_by_mtt(new_state, edges)
+        power = power_by_mtt_fastgraph(new_state, graph)
         if power>best_power:
             best_power=power
             print('update at node,',i+1,'new power:',best_power)
@@ -196,7 +193,7 @@ def greedy_main(inputpath):
             best_states=list(new_state)
     print('greedy best power:',best_power)
     print('best states:',best_states)
-    assert (best_power==power_by_mtt(best_states,edges))
+    assert (best_power==power_by_mtt_fastgraph(best_states,graph))
     return best_power,best_states
 
 
@@ -327,13 +324,12 @@ if __name__ == '__main__':
     filename='4'
     inputdir = os.path.join(inputdpath, filename)
 
-
+    startt = time.time()
     n, edges, graph = construct_whole_graph(inputdir)
 
-    startt=time.time()
 
-    # best_power,best_states=greedy_main(inputpath)
-    best_states,edges=greedy_algorithm(inputdir)
+    best_power,best_states=greedy_main(inputdir,graph)
+    # best_states,edges=greedy_algorithm(inputdir)
 
     begin=time.time()
     best_power=power_by_mtt_fastgraph(best_states,graph)

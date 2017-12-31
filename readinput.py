@@ -159,28 +159,49 @@ def decode_int(input,numNode):
         state.append(nodestate)
     return tuple(state)
 
+def state_to_binary(states):
+    binary_str=[]
+    for i,state in enumerate(states):
+        if state>0:
+            binary_str.append('0')
+        elif state<0:
+            binary_str.append('1')
+    return binary_str
+
+def decimalize(binary, eps, lower_bound):
+    '''
+    Helper function to convert a binary sequence back to decimal number.
+    '''
+    bin_str = ''.join([str(bit) for bit in binary])
+    return lower_bound + int(bin_str, 2)*eps
+
+
+
 if __name__ == '__main__':
     input_path='./input/1'
-    n,edges=read_input(input_path)
-    state = tuple(i * (-1) ** random.randrange(1, 3) for i in range(1, n + 1))
-    print('state:',state)
-    elap1=0.0
-    elap2=0.0
-    graph = build_graph(n, edges)
-    for i in range(6000):
-        state = tuple(i * (-1) ** random.randrange(1, 3) for i in range(1, n + 1))
-        startt=time.time()
-        power_orig=power_by_mtt(state,edges)
-        endt=time.time()
-        elap1+=endt-startt
+    # n,edges=read_input(input_path)
+    from calabash_week4_v1 import construct_graph,power_by_mtt_fastgraph
 
-        startt = time.time()
-        # power_fast=power_by_mtt_fast2(state,graph)
-        power_fast = calc_power(state,graph)
-        endt=time.time()
-        elap2+=endt-startt
-        assert (power_orig - power_fast <1e-6)
-    print('elap_orig:',elap1,'elap_fast:',elap2,'fast',elap1-elap2)
+    n, edges, graph = construct_graph(input_path)
+    # state = tuple(i * (-1) ** random.randrange(1, 3) for i in range(1, n + 1))
+    # print('state:',state)
+    # elap1=0.0
+    # elap2=0.0
+    # graph = build_graph(n, edges)
+    # for i in range(6000):
+    #     state = tuple(i * (-1) ** random.randrange(1, 3) for i in range(1, n + 1))
+    #     startt=time.time()
+    #     power_orig=power_by_mtt(state,edges)
+    #     endt=time.time()
+    #     elap1+=endt-startt
+    #
+    #     startt = time.time()
+    #     # power_fast=power_by_mtt_fast2(state,graph)
+    #     power_fast = calc_power(state,graph)
+    #     endt=time.time()
+    #     elap2+=endt-startt
+    #     assert (power_orig - power_fast <1e-6)
+    # print('elap_orig:',elap1,'elap_fast:',elap2,'fast',elap1-elap2)
 
     # state=decode_int(28108,n)
     # #test_state=(1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
@@ -191,3 +212,30 @@ if __name__ == '__main__':
     # print('state:', state)
     # power_fast = power_by_mtt_fast(state, edges)
     # print('best power',power_fast)
+
+    #input 1
+    length_part1 = int(np.floor(n * 0.5))
+    maxValue_part1=2**length_part1
+
+    length_part2=n-length_part1
+    maxValue_part2=2**length_part2
+
+    states=[-1 ,-2 ,+3 ,+4 ,+5 ,+6, -7 ,+8, -9, +10 ,+11 ,-12, -13 ,+14 ,-15, +16 ,-17, +18 ,-19, +20 ,-21 ,-22 ,-23, -24 ,+25 ,-26, +27, -28 ,-29 ,+30 ,-31 ,+32 ,-33 ,-34 ,+35, -36 ,+37 ,-38 ,+39 ,+40, +41 ,+42 ,-43 ,-44, +45 ,+46 ,+47 ,+48 ,+49 ,-50, +51 ,-52, -53 ,-54 ,-55 ,-56 ,-57, +58 ,-59 ,-60, +61 ,+62, -63 ,+64 ,-65 ,+66 ,-67 ,+68, -69]
+    states_part1=states[0:length_part1]
+    states_part2=states[length_part1:n]
+    assert (len(states_part2)==length_part2)
+    binary_str_part1=state_to_binary(states_part1)
+    binary_str_part2=state_to_binary(states_part2)
+    variant1=decimalize(binary_str_part1,eps=1,lower_bound=0)
+    variant2=decimalize(binary_str_part2,eps=1,lower_bound=0)
+    print('variants:',variant1,variant2)
+
+    chrom=[1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1]
+    chrom_part1=chrom[0:length_part1]
+    chrom_part2=chrom[length_part1:n]
+    chrom_v1=decimalize(chrom_part1,eps=1,lower_bound=0)
+    chrom_v2=decimalize(chrom_part2,eps=1,lower_bound=0)
+    print('from chrom variants:',variant1,variant2)
+
+    best_power=power_by_mtt_fastgraph(states,graph)
+    print('best power:',best_power)
