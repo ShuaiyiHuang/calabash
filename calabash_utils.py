@@ -307,23 +307,25 @@ def greedy_initialize_variants(n,edges,length_part1,length_part2):
     variant1,variant2=split_state_to_variants(states,length_part1,length_part2,n)
     return variant1,variant2
 
-def random_plus(best_states,best_power,graph):
+def random_plus(best_states,best_power,graph,flip_length_list=[1],times_list=[1500]):
     state_rand = list(best_states)
     select_list=range(1,n)
-    times=1500
-    for i in range(times):
-        # print('i:',i)
-        rand_id=random.sample(select_list,1)
-        # print('rand_id',rand_id)
-        new_state=list(state_rand)
-        for ind in rand_id:
-            new_state[ind]*=-1
-        power = power_by_mtt_fastgraph(new_state, graph)
-        if power>best_power:
-            best_power=power
-            print('update at node,',i+1,'new power:',best_power)
-            # state=new_states
-            best_states=list(new_state)
+    # times=3000
+    for idx,flip in enumerate(flip_length_list):
+        times=times_list[idx]
+        print('flip length:', flip, times)
+        for i in range(times):
+            rand_id=random.sample(select_list,flip)
+            # print('rand_id',rand_id)
+            new_state=list(state_rand)
+            for ind in rand_id:
+                new_state[ind]*=-1
+            power = power_by_mtt_fastgraph(new_state, graph)
+            if power>best_power:
+                best_power=power
+                print('update at node,',i+1,'new power:',best_power)
+                # state=new_states
+                best_states=list(new_state)
     print('greedy best power:',best_power)
     print('best states:',best_states)
     assert (best_power==power_by_mtt_fastgraph(best_states,graph))
@@ -332,10 +334,24 @@ def random_plus(best_states,best_power,graph):
 
 if __name__ == '__main__':
     print()
+    # import parser
+    # parser.add_argument('--rseed', type=int, default=30,
+    #                     help='random.seed')
+    # parser.add_argument('--npseed', type=int, default=32,
+    #                     help='np.random.seed')
+
     inputdpath='./input'
     outputpath='./output'
-    filename='4'
+    filename='10'
     inputdir = os.path.join(inputdpath, filename)
+
+    # args = parser.parse_args()
+    # rseed=args.rseed
+    # npseed=args.npseed
+    rseed=30
+    npseed=32
+    random.seed(rseed)
+    np.random.seed(npseed)
 
     n, edges, graph = construct_graph(inputdir)
     state=greedy_algorithm(n,edges)
@@ -343,6 +359,12 @@ if __name__ == '__main__':
     best_power=power_by_mtt_fastgraph(best_states,graph)
     print('greedy power:',best_power)
 
-    best_power, best_states=random_plus(best_states,best_power,graph)
+    flip_length_list=[1,2,3,4]
+    times_list=[1000,5000,20000,20000]
+    best_power, best_states=random_plus(best_states,best_power,graph,flip_length_list,times_list)
+
+    #score
+    score=int(1e9 + 1e6*np.log(best_power))
+    print('score:',score)
     write_output(best_states,outputpath,filename)
 
