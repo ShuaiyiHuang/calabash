@@ -150,7 +150,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--tselect', type=int, default=1,
                         help='1:TournamentSelection,0:RouletteWheelSelection')
-    parser.add_argument('--popsize', type=int, default=500,
+    parser.add_argument('--popsize', type=int, default=1000,
                         help='size of population')
     parser.add_argument('--pc', type=float, default=0.8,
                         help='probability of cross over')
@@ -158,7 +158,7 @@ if __name__ == '__main__':
                         help='probability of exchange')
     parser.add_argument('--pm', type=float, default=0.2,
                         help='probability of mutation')
-    parser.add_argument('--numEpoch', type=int, default=300,
+    parser.add_argument('--numEpoch', type=int, default=400,
                         help='num of generation')
 
     parser.add_argument('--rseed', type=int, default=30,
