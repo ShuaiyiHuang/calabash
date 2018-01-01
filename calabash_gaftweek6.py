@@ -158,7 +158,7 @@ if __name__ == '__main__':
                         help='probability of exchange')
     parser.add_argument('--pm', type=float, default=0.2,
                         help='probability of mutation')
-    parser.add_argument('--numEpoch', type=int, default=400,
+    parser.add_argument('--numEpoch', type=int, default=800,
                         help='num of generation')
 
     parser.add_argument('--rseed', type=int, default=30,
