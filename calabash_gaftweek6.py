@@ -148,22 +148,22 @@ if __name__ == '__main__':
     parser.add_argument('--filename', type=str, default='6',
                         help='filename')
 
-    parser.add_argument('--tselect', type=int, default=1,
+    parser.add_argument('--tselect', type=int, default=0,
                         help='1:TournamentSelection,0:RouletteWheelSelection')
-    parser.add_argument('--popsize', type=int, default=1000,
+    parser.add_argument('--popsize', type=int, default=4000,
                         help='size of population')
     parser.add_argument('--pc', type=float, default=0.8,
                         help='probability of cross over')
     parser.add_argument('--pe', type=float, default=0.9,
                         help='probability of exchange')
-    parser.add_argument('--pm', type=float, default=0.2,
+    parser.add_argument('--pm', type=float, default=0.3,
                         help='probability of mutation')
-    parser.add_argument('--numEpoch', type=int, default=800,
+    parser.add_argument('--numEpoch', type=int, default=150,
                         help='num of generation')
 
-    parser.add_argument('--rseed', type=int, default=30,
+    parser.add_argument('--rseed', type=int, default=87678,
                         help='random.seed')
-    parser.add_argument('--npseed', type=int, default=32,
+    parser.add_argument('--npseed', type=int, default=132,
                         help='np.random.seed')
 
     args = parser.parse_args()

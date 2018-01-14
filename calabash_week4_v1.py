@@ -30,7 +30,7 @@ if __name__ == '__main__':
                         help='output path')
     parser.add_argument('--inputpath', type=str, default='./input',
                         help='output path')
-    parser.add_argument('--filename', type=str, default='4',
+    parser.add_argument('--filename', type=str, default='6',
                         help='filename')
 
     parser.add_argument('--tselect', type=int, default=1,
@@ -87,7 +87,7 @@ if __name__ == '__main__':
     print('maxValue part2:',maxValue_part2)
     print('length part1 part2:',length_part1,length_part2)
 
-    var1,var2=greedy_initialize_variants(n,edges,length_part1,length_part2)
+    var1,var2=greedy_initialize_variants(n,edges,length_part1,length_part2,graph)
 
     indv_template = GAIndividual(ranges=[(0, maxValue_part1),(0,maxValue_part2)], encoding='binary', eps=[1,1])
     indv_template.variants=[var1,var2]
