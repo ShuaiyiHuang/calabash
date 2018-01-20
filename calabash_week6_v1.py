@@ -33,7 +33,7 @@ if __name__ == '__main__':
     parser.add_argument('--filename', type=str, default='6',
                         help='filename')
 
-    parser.add_argument('--tselect', type=int, default=1,
+    parser.add_argument('--tselect', type=int, default=0,
                         help='1:TournamentSelection,0:RouletteWheelSelection')
     parser.add_argument('--popsize', type=int, default=2000,
                         help='size of population')
@@ -41,14 +41,14 @@ if __name__ == '__main__':
                         help='probability of cross over')
     parser.add_argument('--pe', type=float, default=0.9,
                         help='probability of exchange')
-    parser.add_argument('--pm', type=float, default=0.2,
+    parser.add_argument('--pm', type=float, default=0.3,
                         help='probability of mutation')
-    parser.add_argument('--numEpoch', type=int, default=10,
+    parser.add_argument('--numEpoch', type=int, default=500,
                         help='num of generation')
 
-    parser.add_argument('--rseed', type=int, default=30,
+    parser.add_argument('--rseed', type=int, default=87678,
                         help='random.seed')
-    parser.add_argument('--npseed', type=int, default=32,
+    parser.add_argument('--npseed', type=int, default=132,
                         help='np.random.seed')
 
     args = parser.parse_args()
@@ -88,10 +88,16 @@ if __name__ == '__main__':
     print('length part1 part2:',length_part1,length_part2)
 
     var1,var2=greedy_initialize_variants(n,edges,length_part1,length_part2,graph)
-
     indv_template = GAIndividual(ranges=[(0, maxValue_part1),(0,maxValue_part2)], encoding='binary', eps=[1,1])
+
     indv_template.variants=[var1,var2]
     indv_template.chromsome=indv_template.encode()
+
+
+    # var=greedy_initialize_one_variants(n,edges,graph)
+    # indv_template = GAIndividual(ranges=[(0, maxValue)], encoding='binary', eps=[1])
+    # indv_template.variants=[var]
+    # indv_template.chromsome=indv_template.encode()
     #####################Initialize approach2##############################
     # ranges_list = []
     # eps_list = []
@@ -150,6 +156,7 @@ if __name__ == '__main__':
         assert (len(x_decode)==n)
         state = decode_sequence(x_decode)
         power = power_by_mtt_fastgraph(state, graph)
+        # print('power',power)
         return float(power)
 
     # def get_x_decode(indv):

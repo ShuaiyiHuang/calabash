@@ -302,36 +302,27 @@ def split_state_to_variants(states,length_part1,length_part2,n):
 
     return variant1,variant2
 
+def greedy_initialize_one_variants(n,edges,graph):
+    states=greedy_algorithm2(n,edges)
+    best_power = power_by_mtt_fastgraph(states, graph)
+    print('greedy power',best_power)
+    # power, states=random_plus(states, best_power, graph, flip_length_list=[1], times_list=[1500])
+    def state_to_variant(states):
+        binary_str=state_to_binary(states)
+        variant=decimalize(binary_str,eps=1,lower_bound=0)
+        return variant
+    variant=state_to_variant(states)
+    return variant
+
 def greedy_initialize_variants(n,edges,length_part1,length_part2,graph):
     states=greedy_algorithm(n,edges)
     best_power = power_by_mtt_fastgraph(states, graph)
     print('greedy power',best_power)
+    # power, states=random_plus(states, best_power, graph, flip_length_list=[1], times_list=[1500])
+
     variant1,variant2=split_state_to_variants(states,length_part1,length_part2,n)
     return variant1,variant2
 
-def random_plus(best_states,best_power,graph,flip_length_list=[1],times_list=[1500]):
-    state_rand = list(best_states)
-    select_list=range(1,n)
-    # times=3000
-    for idx,flip in enumerate(flip_length_list):
-        times=times_list[idx]
-        print('flip length:', flip, times)
-        for i in range(times):
-            rand_id=random.sample(select_list,flip)
-            # print('rand_id',rand_id)
-            new_state=list(state_rand)
-            for ind in rand_id:
-                new_state[ind]*=-1
-            power = power_by_mtt_fastgraph(new_state, graph)
-            if power>best_power:
-                best_power=power
-                print('update at node,',i+1,'new power:',best_power)
-                # state=new_states
-                best_states=list(new_state)
-    print('greedy best power:',best_power)
-    print('best states:',best_states)
-    assert (best_power==power_by_mtt_fastgraph(best_states,graph))
-    return best_power,best_states
 
 def random_plus(best_states,best_power,graph,flip_length_list=[1],times_list=[1500]):
     state_rand = list(best_states)
@@ -402,8 +393,8 @@ def random_plus(best_states,best_power,graph,flip_length_list=[1],times_list=[15
                     print('update at node,',i+1,'new power:',best_power)
                     # state=new_states
                     best_states=list(new_state)
-    print('greedy best power:',best_power)
-    print('best states:',best_states)
+    print('after random best power:',best_power)
+    print('after random best states:',best_states)
     assert (best_power==power_by_mtt_fastgraph(best_states,graph))
     return best_power,best_states
 
@@ -439,22 +430,24 @@ if __name__ == '__main__':
 
     print(args)
     n, edges, graph = construct_graph(inputdir)
-    # state=greedy_algorithm(n,edges)
-    # best_states=order(state)
-    # best_power=power_by_mtt_fastgraph(best_states,graph)
-    # print('greedy power:',best_power)
-
-    # a='-1 -2 -3 -4 -5 -6 7 -8 -9 -10 11 12 -13 14 -15 -16 -17 18 19 20 21 -22 -23 -24 25 -26 27 28 29 -30 -31 -32 -33 -34 35 -36 -37 38 39 40 -41 -42 43 -44 45 -46 47 48 -49 50 51 52 -53 -54 -55 56 57 -58 59 -60 61 62 63 -64 -65 -66 67 68 69 70 -71 72 -73 74 -75 76 -77 78 -79 80 81 82 83 -84 85 -86 87 -88 -89 90 91 -92 93 -94 -95 -96 -97 -98 -99 -100'
-    # bin_str=a.split(' ')
-    # best_states = [int(str_bit) for str_bit in bin_str]
-    best_states=[-1, 2, -3, 4, -5, 6, -7, 8, 9, 10, 11, 12, 13, -14, -15, -16, 17, 18, 19, 20, -21, 22, -23, 24, -25, -26, 27, -28, -29, 30, -31, -32, 33, 34, -35, -36, 37, -38, 39, -40, 41, -42, -43, 44, -45, 46, -47, -48, 49, -50, -51, -52, -53, 54, -55, 56, -57, 58, -59, 60, 61, 62, 63, -64, -65, 66, -67, 68, -69, 70, 71, 72, 73, -74, 75, -76, 77, 78, -79, 80, -81, -82, -83, 84, -85, 86, -87, 88, 89, -90, 91, -92, -93, 94, 95, 96, 97, 98, -99, -100]
+    state=greedy_algorithm2(n,edges)
+    best_states=order(state)
     best_power=power_by_mtt_fastgraph(best_states,graph)
+    print('greedy power:',best_power)
+
+    # # a='-1 -2 -3 -4 -5 -6 7 -8 -9 -10 11 12 -13 14 -15 -16 -17 18 19 20 21 -22 -23 -24 25 -26 27 28 29 -30 -31 -32 -33 -34 35 -36 -37 38 39 40 -41 -42 43 -44 45 -46 47 48 -49 50 51 52 -53 -54 -55 56 57 -58 59 -60 61 62 63 -64 -65 -66 67 68 69 70 -71 72 -73 74 -75 76 -77 78 -79 80 81 82 83 -84 85 -86 87 -88 -89 90 91 -92 93 -94 -95 -96 -97 -98 -99 -100'
+    # # bin_str=a.split(' ')
+    # # best_states = [int(str_bit) for str_bit in bin_str]
+    # best_states=[-1, 2, -3, 4, -5, 6, -7, 8, 9, 10, 11, -12, 13, -14, 15, 16, 17, -18, 19, 20, -21, 22, -23, 24, -25, 26, -27, -28, -29, 30, -31, -32, 33, 34, -35, 36, 37, -38, -39, -40, 41, 42, -43, 44, -45, 46, -47, -48, 49, -50, -51, -52, -53, 54, 55, 56, -57, 58, -59, 60, 61, -62, -63, -64, 65, 66, -67, -68, -69, -70, 71, 72, 73, -74, 75, -76, 77, -78, -79, 80, -81, -82, -83, 84, -85, 86, -87, 88, 89, -90, 91, 92, -93, -94, 95, 96, 97, 98, -99, 100]
+    # best_power=power_by_mtt_fastgraph(best_states,graph)
     print('initial power:', best_power)
     score=power_to_score(best_power)
     print('initial score',score)
 
-    flip_length_list=[1,2,3,4,5,6]
-    times_list=[5*n,n*n,int(n/2)*n*n,int(n/2)*n*n,int(n/2)*n*n,int(n/2)*n*n]
+    # flip_length_list=[1,2,3,4,5,6]
+    # times_list=[5*n,n*n,int(n/2)*n*n,int(n/2)*n*n,int(n/2)*n*n,int(n/2)*n*n]
+    flip_length_list=[1,2,3]
+    times_list=[5*n,n*n,int(n/2)*n*n]
     best_power, best_states=random_plus(best_states,best_power,graph,flip_length_list,times_list)
 
     #score

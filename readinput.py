@@ -180,7 +180,7 @@ def decimalize(binary, eps, lower_bound):
 if __name__ == '__main__':
     input_path='./input/1'
     # n,edges=read_input(input_path)
-    from calabash_week4_v1 import construct_graph,power_by_mtt_fastgraph
+    from calabash_week6_v1 import construct_graph,power_by_mtt_fastgraph
 
     n, edges, graph = construct_graph(input_path)
     # state = tuple(i * (-1) ** random.randrange(1, 3) for i in range(1, n + 1))
