@@ -266,6 +266,34 @@ def greedy_algorithm2(n,edges):
 
     return state
 
+def greedy_algorithm3(n,edges):
+    #not works well
+    startt=time.time()
+
+    n,edges,graph=construct_greedy_graph(n,edges)
+    mystate=[]
+
+    for i in range(1,n+1):
+        print('iter',i,'------------------------')
+        toneg=[0,2]
+        topos=[1,3]
+        graph_toneg=graph[toneg,:,i]
+        assert (graph_toneg.shape==(2,n+1))
+        graph_topos=graph[topos,:,i]
+        weight_toneg=np.sum(graph_toneg)
+        weight_topos=np.sum(graph_topos)
+        nodeid=i if weight_topos>weight_toneg else -i
+        mystate.append(nodeid)
+        print('weighttoneg,weighttopos,chosenid:',weight_toneg,weight_topos,nodeid)
+
+    state=tuple(mystate)
+
+    endt=time.time()
+    elapsed_time=endt-startt
+    print ('greedy elapsed time:',elapsed_time//60,'min',elapsed_time%60,'s')
+
+    return state
+
 def order(states):
     #input list,unordered
     states_np=np.array(states)
@@ -275,7 +303,7 @@ def order(states):
     states_list_order=list(states_np_order)
     return states_list_order
 
-def state_to_binary(states):
+def state_to_binarystr(states):
     binary_str=[]
     for i,state in enumerate(states):
         if state>0:
@@ -283,6 +311,15 @@ def state_to_binary(states):
         elif state<0:
             binary_str.append('1')
     return binary_str
+
+def binarystr_to_state(binary_str):
+    state=[]
+    for i,bin_str in enumerate(binary_str):
+        if bin_str==0:
+            state.append(i)
+        elif bin_str==1:
+            state.append(-i)
+    return state
 
 def decimalize(binary, eps, lower_bound):
     '''
@@ -295,12 +332,58 @@ def split_state_to_variants(states,length_part1,length_part2,n):
     states_part1=states[0:length_part1]
     states_part2=states[length_part1:n]
     assert (len(states_part2)==length_part2)
-    binary_str_part1=state_to_binary(states_part1)
-    binary_str_part2=state_to_binary(states_part2)
+    binary_str_part1=state_to_binarystr(states_part1)
+    binary_str_part2=state_to_binarystr(states_part2)
     variant1=decimalize(binary_str_part1,eps=1,lower_bound=0)
     variant2=decimalize(binary_str_part2,eps=1,lower_bound=0)
 
-    return variant1,variant2
+    binary_str_all=state_to_binarystr(states)
+    var_all=decimalize(binary_str_all,eps=1,lower_bound=0)
+
+    return variant1,variant2,var_all
+
+def merge_variants_to_state(variants,length_part1,length_part2,graph=[],ranges=[],eps=1):
+    from math import log2
+    # binary_str_part1=binarize(var1,eps,length_part1)
+    # binary_str_part2=binarize(var2,eps,length_part2)
+    # binary_str=binary_str_part1+binary_str_part2
+    # state=binarystr_to_state(binary_str)
+    # if len(graph)!=0:
+    #     power=power_by_mtt_fastgraph(state,graph)
+    #     print('power in merge_variants_to_state',power)
+
+    def get_precision(ranges,eps):
+        lengths, precisions=[],[]
+        for (a, b), eps in zip(ranges, eps):
+            length = int(log2((b - a)/eps))
+            precision = (b - a)/(2**length)
+
+            if precision != eps:
+                print('Precision loss {} -> {}'.format(eps, precision))
+
+            lengths.append(length)
+            precisions.append(precision)
+        return lengths,precisions
+    def encode(variants, ranges,lengths, precisions):
+        '''
+        Encode variant to gene sequence in individual using different encoding.
+        '''
+
+        chromsome = []
+        for var, (a, _), length, eps in zip(variants, ranges,
+                                            lengths, precisions):
+            chromsome.extend(binarize(var-a, eps, length))
+
+        return chromsome
+    lengths,precisions=get_precision(ranges,eps)
+    # assert (lengths[0]==length_part1)
+    chromsome=encode(variants,ranges,lengths,precisions)
+    print('lengths ',lengths)
+    if len(chromsome)!=0:
+        power=power_by_mtt_fastgraph(chromsome,graph)
+        print('power in merge_variants_to_state',power)
+
+    return chromsome
 
 def greedy_initialize_one_variants(n,edges,graph):
     states=greedy_algorithm2(n,edges)
@@ -308,20 +391,20 @@ def greedy_initialize_one_variants(n,edges,graph):
     print('greedy power',best_power)
     # power, states=random_plus(states, best_power, graph, flip_length_list=[1], times_list=[1500])
     def state_to_variant(states):
-        binary_str=state_to_binary(states)
+        binary_str=state_to_binarystr(states)
         variant=decimalize(binary_str,eps=1,lower_bound=0)
         return variant
     variant=state_to_variant(states)
     return variant
 
 def greedy_initialize_variants(n,edges,length_part1,length_part2,graph):
-    states=greedy_algorithm(n,edges)
+    states=greedy_algorithm3(n,edges)
     best_power = power_by_mtt_fastgraph(states, graph)
     print('greedy power',best_power)
     # power, states=random_plus(states, best_power, graph, flip_length_list=[1], times_list=[1500])
 
-    variant1,variant2=split_state_to_variants(states,length_part1,length_part2,n)
-    return variant1,variant2
+    variant1,variant2,var_all=split_state_to_variants(states,length_part1,length_part2,n)
+    return variant1,variant2,var_all
 
 
 def random_plus(best_states,best_power,graph,flip_length_list=[1],times_list=[1500]):
@@ -336,9 +419,9 @@ def random_plus(best_states,best_power,graph,flip_length_list=[1],times_list=[15
         elif idx==1:
             times=n
             print('idx', idx, 'times', times)
-        elif idx==2:
-            times=n
-            print('idx', idx, 'times', times)
+        # elif idx==2:
+        #     times=n
+        #     print('idx', idx, 'times', times)
         else:
             times = times_list[idx]
         print('flip length:', flip, times)
@@ -368,19 +451,19 @@ def random_plus(best_states,best_power,graph,flip_length_list=[1],times_list=[15
                         print('update at node,', i + 1, 'new power:', best_power)
                         # state=new_states
                         best_states = list(new_state)
-            elif idx==2:
-                for j in range(times):
-                    for k in range(times):
-                        rand_id=[select_list[i],select_list[j],select_list[k]]
-                        new_state = list(state_rand)
-                        for ind in rand_id:
-                            new_state[ind] *= -1
-                        power = power_by_mtt_fastgraph(new_state, graph)
-                        if power > best_power:
-                            best_power = power
-                            print('update at node,', i + 1, 'new power:', best_power)
-                            # state=new_states
-                            best_states = list(new_state)
+            # elif idx==2:
+            #     for j in range(times):
+            #         for k in range(times):
+            #             rand_id=[select_list[i],select_list[j],select_list[k]]
+            #             new_state = list(state_rand)
+            #             for ind in rand_id:
+            #                 new_state[ind] *= -1
+            #             power = power_by_mtt_fastgraph(new_state, graph)
+            #             if power > best_power:
+            #                 best_power = power
+            #                 print('update at node,', i + 1, 'new power:', best_power)
+            #                 # state=new_states
+            #                 best_states = list(new_state)
             else:
                 rand_id=random.sample(select_list,flip)
             # print('rand_id',rand_id)
@@ -402,6 +485,10 @@ def power_to_score(power):
     score=int(1e9 + 1e6*np.log(power))
     return score
 
+def score_to_power(score):
+    power=np.power(np.e,(score-1e9)*1.0/1e6)
+    return power
+
 if __name__ == '__main__':
     print()
     # import parser
@@ -413,14 +500,14 @@ if __name__ == '__main__':
 
     inputdpath='./input'
     outputpath='./output'
-    filename='6'
+    filename='9'
     inputdir = os.path.join(inputdpath, filename)
     import argparse
     parser = argparse.ArgumentParser(description='tune calabash')
 
-    parser.add_argument('--rseed', type=int, default=325986,
+    parser.add_argument('--rseed', type=int, default=32,
                         help='random.seed')
-    parser.add_argument('--npseed', type=int, default=12378,
+    parser.add_argument('--npseed', type=int, default=32,
                         help='np.random.seed')
     args = parser.parse_args()
     rseed=args.rseed
@@ -430,7 +517,7 @@ if __name__ == '__main__':
 
     print(args)
     n, edges, graph = construct_graph(inputdir)
-    state=greedy_algorithm2(n,edges)
+    state=greedy_algorithm3(n,edges)
     best_states=order(state)
     best_power=power_by_mtt_fastgraph(best_states,graph)
     print('greedy power:',best_power)
@@ -446,8 +533,8 @@ if __name__ == '__main__':
 
     # flip_length_list=[1,2,3,4,5,6]
     # times_list=[5*n,n*n,int(n/2)*n*n,int(n/2)*n*n,int(n/2)*n*n,int(n/2)*n*n]
-    flip_length_list=[1,2,3]
-    times_list=[5*n,n*n,int(n/2)*n*n]
+    flip_length_list=[1,2]
+    times_list=[5*n,n*n]
     best_power, best_states=random_plus(best_states,best_power,graph,flip_length_list,times_list)
 
     #score

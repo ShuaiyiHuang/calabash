@@ -142,7 +142,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='tune calabash')
     parser.add_argument('--outputpath', type=str, default='./output',
-                        help='output path')
+                        help='outputq path')
     parser.add_argument('--inputpath', type=str, default='./input',
                         help='output path')
     parser.add_argument('--filename', type=str, default='7',
@@ -158,7 +158,7 @@ if __name__ == '__main__':
                         help='probability of exchange')
     parser.add_argument('--pm', type=float, default=0.1,
                         help='probability of mutation')
-    parser.add_argument('--numEpoch', type=int, default=170,
+    parser.add_argument('--numEpoch', type=int, default=400,
                         help='num of generation')
 
     parser.add_argument('--rseed', type=int, default=30,
@@ -260,8 +260,10 @@ if __name__ == '__main__':
     #random flip part
     print('start random flipping...')
     from calabash_utils import random_plus
-    flip_length_list=[1,2,3,4,5,6]
-    times_list=[5*n,n*n,int(n/2)*n*n,int(n/2)*n*n,int(n/2)*n*n,int(n/2)*n*n]
+    # flip_length_list=[1,2,3,4,5,6]
+    # times_list=[5*n,n*n,int(n/2)*n*n,int(n/2)*n*n,int(n/2)*n*n,int(n/2)*n*n]
+    flip_length_list=[1,2,3]
+    times_list=[5*n,n*n,int(n/2)*n*n]
     best_power, best_states=random_plus(best_state,best_power,graph,flip_length_list,times_list)
     print('new power',best_power)
     score=int(1e9 + 1e6*np.log(best_power))
