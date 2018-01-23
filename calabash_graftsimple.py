@@ -145,25 +145,24 @@ if __name__ == '__main__':
                         help='output path')
     parser.add_argument('--inputpath', type=str, default='./input',
                         help='output path')
-    parser.add_argument('--filename', type=str, default='6',
+    parser.add_argument('--filename', type=str, default='4',
                         help='filename')
 
-    parser.add_argument('--tselect', type=int, default=0,
-                        help='1:TournamentSelection,0:RouletteWheelSelection')
-    parser.add_argument('--popsize', type=int, default=2000,
+    parser.add_argument('--tselect', type=int, default=1,                        help='1:TournamentSelection,0:RouletteWheelSelection')
+    parser.add_argument('--popsize', type=int, default=500,
                         help='size of population')
-    parser.add_argument('--pc', type=float, default=0.9,
+    parser.add_argument('--pc', type=float, default=0.8,
                         help='probability of cross over')
     parser.add_argument('--pe', type=float, default=0.9,
                         help='probability of exchange')
-    parser.add_argument('--pm', type=float, default=0.6,
+    parser.add_argument('--pm', type=float, default=0.2,
                         help='probability of mutation')
-    parser.add_argument('--numEpoch', type=int, default=800,
+    parser.add_argument('--numEpoch', type=int, default=10,
                         help='num of generation')
 
-    parser.add_argument('--rseed', type=int, default=87678,
+    parser.add_argument('--rseed', type=int, default=30,
                         help='random.seed')
-    parser.add_argument('--npseed', type=int, default=132,
+    parser.add_argument('--npseed', type=int, default=32,
                         help='np.random.seed')
 
     args = parser.parse_args()
@@ -251,22 +250,7 @@ if __name__ == '__main__':
     print('best state:',best_state)
     print('best power:',best_power)
 
-    #score
-    score=int(1e9 + 1e6*np.log(best_power))
-    print('score:',score)
-
     write_output(best_state, outputpath, filename)
-
-    #random flip part
-    print('start random flipping...')
-    from calabash_utils import random_plus
-    flip_length_list=[1,2,3,4,5,6]
-    times_list=[5*n,n*n,int(n/2)*n*n,int(n/2)*n*n,int(n/2)*n*n,int(n/2)*n*n]
-    best_power, best_states=random_plus(best_state,best_power,graph,flip_length_list,times_list)
-    print('new power',best_power)
-    score=int(1e9 + 1e6*np.log(best_power))
-    print('score:',score)
-    write_output(best_states,outputpath,filename)
 
 
 

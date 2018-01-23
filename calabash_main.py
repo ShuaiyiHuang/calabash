@@ -267,7 +267,7 @@ def greedy_algorithm2(n,edges):
     return state
 
 def greedy_algorithm3(n,edges):
-    #not works well
+    #greedy according to incoming weighted degree
     startt=time.time()
 
     n,edges,graph=construct_greedy_graph(n,edges)
@@ -321,13 +321,6 @@ def binarystr_to_state(binary_str):
             state.append(-i)
     return state
 
-def decimalize(binary, eps, lower_bound):
-    '''
-    Helper function to convert a binary sequence back to decimal number.
-    '''
-    bin_str = ''.join([str(bit) for bit in binary])
-    return lower_bound + int(bin_str, 2)*eps
-
 def split_state_to_variants(states,length_part1,length_part2,n):
     states_part1=states[0:length_part1]
     states_part2=states[length_part1:n]
@@ -342,16 +335,9 @@ def split_state_to_variants(states,length_part1,length_part2,n):
 
     return variant1,variant2,var_all
 
+#not test yet
 def merge_variants_to_state(variants,length_part1,length_part2,graph=[],ranges=[],eps=1):
     from math import log2
-    # binary_str_part1=binarize(var1,eps,length_part1)
-    # binary_str_part2=binarize(var2,eps,length_part2)
-    # binary_str=binary_str_part1+binary_str_part2
-    # state=binarystr_to_state(binary_str)
-    # if len(graph)!=0:
-    #     power=power_by_mtt_fastgraph(state,graph)
-    #     print('power in merge_variants_to_state',power)
-
     def get_precision(ranges,eps):
         lengths, precisions=[],[]
         for (a, b), eps in zip(ranges, eps):
@@ -368,7 +354,6 @@ def merge_variants_to_state(variants,length_part1,length_part2,graph=[],ranges=[
         '''
         Encode variant to gene sequence in individual using different encoding.
         '''
-
         chromsome = []
         for var, (a, _), length, eps in zip(variants, ranges,
                                             lengths, precisions):
@@ -522,17 +507,11 @@ if __name__ == '__main__':
     best_power=power_by_mtt_fastgraph(best_states,graph)
     print('greedy power:',best_power)
 
-    # # a='-1 -2 -3 -4 -5 -6 7 -8 -9 -10 11 12 -13 14 -15 -16 -17 18 19 20 21 -22 -23 -24 25 -26 27 28 29 -30 -31 -32 -33 -34 35 -36 -37 38 39 40 -41 -42 43 -44 45 -46 47 48 -49 50 51 52 -53 -54 -55 56 57 -58 59 -60 61 62 63 -64 -65 -66 67 68 69 70 -71 72 -73 74 -75 76 -77 78 -79 80 81 82 83 -84 85 -86 87 -88 -89 90 91 -92 93 -94 -95 -96 -97 -98 -99 -100'
-    # # bin_str=a.split(' ')
-    # # best_states = [int(str_bit) for str_bit in bin_str]
-    # best_states=[-1, 2, -3, 4, -5, 6, -7, 8, 9, 10, 11, -12, 13, -14, 15, 16, 17, -18, 19, 20, -21, 22, -23, 24, -25, 26, -27, -28, -29, 30, -31, -32, 33, 34, -35, 36, 37, -38, -39, -40, 41, 42, -43, 44, -45, 46, -47, -48, 49, -50, -51, -52, -53, 54, 55, 56, -57, 58, -59, 60, 61, -62, -63, -64, 65, 66, -67, -68, -69, -70, 71, 72, 73, -74, 75, -76, 77, -78, -79, 80, -81, -82, -83, 84, -85, 86, -87, 88, 89, -90, 91, 92, -93, -94, 95, 96, 97, 98, -99, 100]
-    # best_power=power_by_mtt_fastgraph(best_states,graph)
+
     print('initial power:', best_power)
     score=power_to_score(best_power)
     print('initial score',score)
 
-    # flip_length_list=[1,2,3,4,5,6]
-    # times_list=[5*n,n*n,int(n/2)*n*n,int(n/2)*n*n,int(n/2)*n*n,int(n/2)*n*n]
     flip_length_list=[1,2]
     times_list=[5*n,n*n]
     best_power, best_states=random_plus(best_states,best_power,graph,flip_length_list,times_list)
